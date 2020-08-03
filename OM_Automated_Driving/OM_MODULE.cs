@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Interop.TJRWinTools3;
 
 namespace OM_Automated_Driving
