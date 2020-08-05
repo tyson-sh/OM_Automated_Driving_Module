@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Interop.TJRWinTools3;
 using System.Runtime.InteropServices;
@@ -80,6 +81,9 @@ namespace OM_Automated_Driving
         Guid("b18abdab-01d8-4b10-b3f9-24d558a22ee9"),
         ClassInterface(ClassInterfaceType.None)
     ]
+    [
+        ComVisible(true)
+    ]
     public class OM_Module : IOM_Module
     {
         
@@ -91,7 +95,7 @@ namespace OM_Automated_Driving
         
         // Define constants for the worlds used by the graphics object
         private const int WORLD_ROADWAY = (int)SimConstants.WORLD_ROADWAY;
-        private const int WORLD_SCREEN = (int) SimConstants.WORLD_ORTHOGRAPHIC;
+        private const int WORLD_SCREEN = (int)SimConstants.WORLD_ORTHOGRAPHIC;
         
         // Instantiate all variables that are public to this class and the calling routine
         private SimEvents Events;
@@ -147,7 +151,9 @@ namespace OM_Automated_Driving
         private OMStaticVariables StaticVars;
 
         // Zero parameter constructor included to satisfy COM registration requirements
-        public OM_Module() {}
+        public OM_Module()
+        {
+        }
     
         // Public properties for interfacing with STISIM internal variables
         public string BSAVData
@@ -209,104 +215,190 @@ namespace OM_Automated_Driving
 
         public bool AddNew(OMParameters OMVars)
         {
-            return true;
+            try
+            {
+                return true;
+            }
+            catch (Exception e)
+            {
+                OM_ErrorMessage = "AddNew" + e.Message;
+                return false;
+            }
+            
         }
 
         public bool ControlInputs(DYNAMICSParams Dyn, ref float Steering, ref float Throttle, ref float Brake,
             ref float Clutch, ref short Gear, ref int DInput)
         {
-            Driver.Brake = Brake;
-            Driver.Buttons = DInput;
-            Driver.Clutch = Clutch;
-            Driver.Gear = Gear;
-            Driver.Steer = Steering;
-            Driver.Throttle = Throttle;
+            try
+            {
+                Driver.Brake = Brake;
+                Driver.Buttons = DInput;
+                Driver.Clutch = Clutch;
+                Driver.Gear = Gear;
+                Driver.Steer = Steering;
+                Driver.Throttle = Throttle;
 
-            Gear = 0;
-            return true;
+                Gear = 0;
+                return true;
+            }
+            catch (Exception e)
+            {
+                OM_ErrorMessage = "ControlInputs" + e.Message;
+                return false;
+            }
+            
         }
 
         public bool Dynamic(ref DYNAMICSParams Dyn)
         {
-            return true;
+            try
+            {
+                return true;
+            }
+            catch (Exception e)
+            {
+                OM_ErrorMessage = "Dynamic " + e.Message;
+                return false;
+            }
+            
         }
 
         public bool HandleCrash(ref short Override, short CrashEvent, short EventIndex)
         {
-            Override = 0;
-            return true;
+            try
+            {
+                Override = 0;
+                return true;
+            }
+            catch (Exception e)
+            {
+                OM_ErrorMessage = "handle crash " + e.Message;
+                return false;
+            }
+            
         }
 
         public bool Initialize(ref OMStaticVariables SV, int[] WorldIndex, TJR3DGraphics GraphicsIn, 
             STI_3D_Terrain TerrainIn)
         {
-            
-            // Get the handles to the simulator's 3D roadway world and 2D screen world
-            ID_World = WorldIndex[WORLD_ROADWAY];
-            ID_Screen = WorldIndex[WORLD_SCREEN];
-            
-            // Assign references to the main graphics and terrain objects so they can be used in other modules
-            _graphics = GraphicsIn;
-            _terrain = TerrainIn;
-            
-            // Make the static variables available to all other methods
-            
-            StaticVars = (OMStaticVariables)CloneStructure(SV);
+            try
+            {
+                // Get the handles to the simulator's 3D roadway world and 2D screen world
+                ID_World = WorldIndex[WORLD_ROADWAY];
+                ID_Screen = WorldIndex[WORLD_SCREEN];
 
-            return true;
+                // Assign references to the main graphics and terrain objects so they can be used in other modules
+                _graphics = GraphicsIn;
+                _terrain = TerrainIn;
+
+                // Make the static variables available to all other methods
+                StaticVars = (OMStaticVariables) CloneStructure(SV);
+                
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                OM_ErrorMessage = "Initialize" + e.Message;
+                return false;
+            }
+            
         }
 
         public bool PostRun(string Comments, string DriverName, string runNumber, string DriverID)
         {
-            // Release some of the objects that were created
-            _sound = null;
-            _tools = null;
-            
-            return true;
+
+            try
+            {
+                // Release some of the objects that were created
+                _sound = null;
+                _tools = null;
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                OM_ErrorMessage = "PostRun " + e.Message;
+                return false;
+            }
+
         }
 
         public bool SavePlaybackData(ref float[] PlaybackData, ref string PlaybackString)
         {
-            return true;
+            try
+            {
+                return true;
+            }
+            catch (Exception e)
+            {
+                OM_ErrorMessage = "SavePlaybackData" + e.Message;
+                return false;
+            }
         }
 
         public bool Shutdown(int RunCompleted)
         {
-            
-            // Release some of the objects that were created
-            _graphics = null;
-            _terrain = null;
+            try
+            {
+                // Release some of the objects that were created
+                _graphics = null;
+                _terrain = null;
 
-            return true;
+                return true;
+            }
+            catch (Exception e)
+            {
+                OM_ErrorMessage = "shutdown " + e.Message + e.Source + e.StackTrace;
+                return false;
+            }
         }
 
         public bool StartUp(ref GAINSParams Config, object BackForm, ref OMStaticVariables SV, ref bool UseNew,
             ref float[] PlaybackData, string PlaybackString, string ParamFile, TJRSoundEffects SoundIn)
         {
-            // Assign a reference to the local sound object so that it can be used in other modules
-            _sound = SoundIn;
-            
-            StreamReader ParamsIn;
-            
-            // If there is an initialization file specified then do the initializing
-            if (File.Exists(ParamFile))
+            try
             {
-                ParamsIn = new StreamReader(ParamFile);
-                ParamsIn.Close();
+                // Assign a reference to the local sound object so that it can be used in other modules
+                _sound = SoundIn;
+
+                StreamReader ParamsIn;
+
+                // If there is an initialization file specified then do the initializing
+                if (File.Exists(ParamFile))
+                {
+                    ParamsIn = new StreamReader(ParamFile);
+                    ParamsIn.Close();
+                }
+
+                // Save a local version of the configuration file
+                Gains = (GAINSParams) CloneStructure(Config);
+
+                UseNew = false;
+                return true;
             }
-
-            // Save a local version of the configuration file
-            Gains = (GAINSParams)CloneStructure(Config);
-
-            UseNew = false;
-            return true;
+            catch (Exception e)
+            {
+                OM_ErrorMessage = "Startup " + e.Message;
+                return false;
+            }
+            
         }
 
         public bool Update(ref OMDynamicVariables DV, DYNAMICSParams Vehicle, short NumEvents, ref float[] EDist, 
             short[] EDes, short[] EIndex)
         {
-            DynVars = (OMDynamicVariables)CloneStructure(DV);
-            return true;
+            try
+            {
+                DynVars = (OMDynamicVariables) CloneStructure(DV);
+                return true;
+            }
+            catch (Exception e)
+            {
+                OM_ErrorMessage = "Update " + e.Message;
+                return false;
+            }
         }
 
         // Private methods
@@ -318,6 +410,16 @@ namespace OM_Automated_Driving
         private object CloneStructure(object StrIn)
         {
             return StrIn;
+        }
+
+        private string ProcessError(string ModuleName)
+        {
+            bool Bool;
+            string st;
+
+            st = "(custom) Simulation run aborted! an error has occurred in Open Module " + ModuleName;
+            st = "";
+            return st;
         }
     }
 }
