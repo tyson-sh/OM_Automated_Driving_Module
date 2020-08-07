@@ -521,6 +521,10 @@ namespace OM_Automated_Driving
 
                 // Make the static variables available to all other methods
                 StaticVars = SV;
+                
+                SV.DisplayStrings[1] = "Test_Display 1 = ";
+                SV.DisplayStrings[2] = "Test_Display 2 = ";
+                SV.DisplayStrings[3] = "Hot_Damn = ";
 
                 return true;
             }
@@ -695,7 +699,10 @@ namespace OM_Automated_Driving
             try
             {
                 DynVars = (OMDynamicVariables) CloneStructure(DV);
-
+                DV.DisplayStrings[1] = "test1";
+                DV.DisplayStrings[2] = "test2";
+                DV.DisplayStrings[3] = "It works!! I simply can't believe it!";
+                
                 return true;
             }
             catch (Exception e)
