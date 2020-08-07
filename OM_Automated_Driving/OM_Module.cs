@@ -84,6 +84,19 @@ namespace OM_Automated_Driving
         // Left empty intentionally
     }
     
+    ///
+    /// <summary>
+    /// <para>
+    /// Main class of library currently does the bulk of the work.  Will be refactored in the future to better reflect
+    /// the single responsibility principle of object orientated design.
+    /// </para>
+    /// <para>
+    /// This class must not be renamed from OM_Module.cls, otherwise interfacing capability with STISIM OM will
+    /// be lost.  It must also be registered in the windows registry as a COM object.  use
+    /// <c>regasm.exe path/to/this/dll</c> to perform this action.
+    /// </para>
+    /// </summary>
+    /// 
     [Guid("b18abdab-01d8-4b10-b3f9-24d558a22ee9"), 
      ClassInterface(ClassInterfaceType.None), 
      ComSourceInterfaces(typeof(OMCOM_Events))
@@ -220,7 +233,19 @@ namespace OM_Automated_Driving
         }
         
         // Public functions for defining OM behaviour
-
+        
+        
+        /// <summary>
+        ///     Function for adding a new interactive Open Module event.
+        /// </summary>
+        /// <param name="OMVars">
+        ///     User defined type containing the parameters for the given Open Module being acted on.
+        /// </param>
+        /// <returns>
+        ///    True if everything initialized is fine, otherwise the exception will be handled and the method will
+        ///    return false
+        /// </returns>
+        /// 
         public bool AddNew(OMParameters OMVars)
         {
             try
@@ -234,7 +259,23 @@ namespace OM_Automated_Driving
             }
             
         }
-
+        
+        ///
+        /// <summary>
+        ///     Function for handling any user defined control inputs.
+        /// </summary>
+        /// <param name="Dyn">User defined type containing simulation dynamics variables</param>
+        /// <param name="Steering">Steering wheel angle input digital count</param>
+        /// <param name="Throttle">Throttle pedal input digital count</param>
+        /// <param name="Brake">Braking pedal input digital count</param>
+        /// <param name="Clutch">Clutch pedal input digital count</param>
+        /// <param name="Gear">Current transmission geal</param>
+        /// <param name="DInput"Current button values></param>
+        /// <returns>
+        ///    True if everything initialized fine.  If exception is thrown it will be handled in the catch, and the
+        ///     method will return false.
+        /// </returns>
+        /// 
         public bool ControlInputs(DYNAMICSParams Dyn, ref float Steering, ref float Throttle, ref float Brake,
             ref float Clutch, ref short Gear, ref int DInput)
         {
@@ -257,7 +298,17 @@ namespace OM_Automated_Driving
             }
             
         }
-
+        
+        ///
+        /// <summary>
+        ///     Function for handling all Open Module dynamic updates.
+        /// </summary>
+        /// <param name="Dyn">User defined type containing the driver's vehicle dynamic variables</param>
+        /// <returns>
+        ///    True if everything initialized fine. If exception is thrown it will be handled in the catch, and the
+        ///    method will return false. 
+        /// </returns>
+        /// 
         public bool Dynamics(ref DYNAMICSParams Dyn)
         {
             try
@@ -271,7 +322,21 @@ namespace OM_Automated_Driving
             }
             
         }
-
+        
+        ///
+        /// <summary>
+        ///     Function for handling all Open Module action in the event of a driver crash during the simulation run.
+        /// </summary>
+        /// <param name="Override">
+        ///     Parameter defining how STISIM Drive will handle the crash when this method returns
+        ///     control to it
+        /// </param>
+        /// <param name="CrashEvent">Event designator for the event that caused the crash</param>
+        /// <param name="EventIndex">Index specifying which instance of the crash event caused the crash</param>
+        /// <returns>
+        ///     True if everything initialized fine. If exception is thrown it will be handled in the catch, and the
+        ///     method will return false.
+        /// </returns>
         public bool HandleCrash(ref short Override, short CrashEvent, short EventIndex)
         {
             try
@@ -286,7 +351,22 @@ namespace OM_Automated_Driving
             }
             
         }
-
+        
+        ///
+        /// <summary>
+        ///     Function for handling all Open Module initialization.
+        /// </summary>
+        /// <param name="SV">User defined type containing simulation static variables</param>
+        /// <param name="WorldIndex">Handle for the various graphics context that hold the roadway environments</param>
+        /// <param name="GraphicsIn">
+        ///     Reference to the graphics object that the main simulator uses to draw the 3D world
+        /// </param>
+        /// <param name="TerrainIn">Reference to the terrain object that is used by the main simulation loop</param>
+        /// <returns>
+        ///     True if everything initialized fine. If exception is thrown it will be handled in the catch, and the
+        ///     method will return false.
+        /// </returns>
+        /// 
         public bool Initialize(ref OMStaticVariables SV, int[] WorldIndex, TJR3DGraphics GraphicsIn, 
             STI_3D_Terrain TerrainIn)
         {
@@ -313,10 +393,22 @@ namespace OM_Automated_Driving
             }
             
         }
-
+        
+        ///
+        /// <summary>
+        ///     Function for handling anything before the software exits.
+        /// </summary>
+        /// <param name="Comments">Comments entered in the subject information form</param>
+        /// <param name="DriverName">Name of the driver from the subject information form</param>
+        /// <param name="runNumber">Run number entered in the subject information form</param>
+        /// <param name="DriverID">ID entered from the subject information form</param>
+        /// <returns>
+        ///     True if everything initialized fine. If exception is thrown it will be handled in the catch, and the
+        ///     method will return false.
+        /// </returns>
+        /// 
         public bool PostRun(string Comments, string DriverName, string runNumber, string DriverID)
         {
-
             try
             {
                 // Release some of the objects that were created
@@ -330,9 +422,19 @@ namespace OM_Automated_Driving
                 OM_ErrorMessage = "PostRun " + e.Message;
                 return false;
             }
-
         }
-
+        
+        ///
+        /// <summary>
+        ///     Function for specifying any OM data that will be stored as part of a playback file.
+        /// </summary>
+        /// <param name="PlaybackData">Array containing the data that will be saved</param>
+        /// <param name="PlaybackString">String containing string data that will be saved</param>
+        /// <returns>
+        ///     True if everything initialized fine. If exception is thrown it will be handled in the catch, and the
+        ///     method will return false.
+        /// </returns>
+        /// 
         public bool SavePlaybackData(ref float[] PlaybackData, ref string PlaybackString)
         {
             try
@@ -345,7 +447,20 @@ namespace OM_Automated_Driving
                 return false;
             }
         }
-
+        
+        /// <summary>
+        ///     Function for handling Open Module processes immediately after a simulation run has ended.
+        /// </summary>
+        /// <param name="RunCompleted">
+        ///     Flag specifying if the run completed successfully or not
+        ///     0 - Aborted before start of run
+        ///     1 - Run completed successfully
+        ///     2 - Aborted during the run
+        /// </param>
+        /// <returns>
+        ///     True if everything initialized fine. If exception is thrown it will be handled in the catch, and the
+        ///     method will return false.
+        /// </returns>
         public bool Shutdown(int RunCompleted)
         {
             try
@@ -362,7 +477,30 @@ namespace OM_Automated_Driving
                 return false;
             }
         }
-
+        
+        ///
+        /// <summary>
+        ///     Function for handling Open Module processes immediately after the software is started.
+        /// </summary>
+        /// <param name="Config">Configuration file parameters</param>
+        /// <param name="BackForm">Current STISIM Drive background form</param>
+        /// <param name="SV">User defined type containing simulation static variables</param>
+        /// <param name="UseNew">Flag specifying if a new background form will be used (True) or not (False)</param>
+        /// <param name="PlaybackData">
+        ///     Array containing any data that is being transferred from the playback file back into this module
+        /// </param>
+        /// <param name="PlaybackString">
+        ///     String containing any string data that is being transferred from the playback file back into this module
+        /// </param>
+        /// <param name="ParamFile">
+        ///     Name of a file that contains any parameters that will be required by the Open Module code
+        /// </param>
+        /// <param name="SoundIn">Simulation sound object</param>
+        /// <returns>
+        ///     True if everything initialized fine. If exception is thrown it will be handled in the catch, and the
+        ///     method will return false.
+        /// </returns>
+        /// 
         public bool StartUp(ref GAINSParams Config, object BackForm, ref OMStaticVariables SV, ref bool UseNew,
             float[] PlaybackData, string PlaybackString, string ParamFile, TJRSoundEffects SoundIn)
         {
@@ -391,9 +529,28 @@ namespace OM_Automated_Driving
                 OM_ErrorMessage = "Startup " + e.Message;
                 return false;
             }
-            
         }
-
+        
+        ///
+        /// <summary>
+        ///     Function for handling all Open Module action during the actual simulation loop.
+        /// </summary>
+        /// <param name="DV">
+        ///     User defined type containing the simulation parameters that are changing at each time step
+        /// </param>
+        /// <param name="Vehicle">User defined type containing the drivers vehicle dynamic variables</param>
+        /// <param name="NumEvents">Number of events that are in the current display list</param>
+        /// <param name="EDist">Distance from the driver to the event</param>
+        /// <param name="EDes">Event designator for each active event</param>
+        /// <param name="EIndex">
+        ///     Event index for each event in the display list. This value is the index into the Events UDT so that
+        ///     you can get the parameters for each individual event in the display list
+        /// </param>
+        /// <returns>
+        ///     True if everything initialized fine. If exception is thrown it will be handled in the catch, and the
+        ///     method will return false.
+        /// </returns>
+        /// 
         public bool Update(ref OMDynamicVariables DV, DYNAMICSParams Vehicle, short NumEvents, ref float[] EDist, 
             short[] EDes, short[] EIndex)
         {
