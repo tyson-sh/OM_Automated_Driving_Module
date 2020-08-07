@@ -42,6 +42,8 @@
         <Reference Include="System.Xml" />
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Bezier.cs" />
+        <Compile Include="Controller.cs" />
         <Compile Include="OM_Module.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
     </ItemGroup>
