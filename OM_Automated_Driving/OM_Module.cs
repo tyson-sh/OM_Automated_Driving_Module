@@ -1,3 +1,29 @@
+/*
+************************************************************************************************************************
+Copyright <2017> <Alexander Eriksson, Joost De Winter, Neville A Stanton, Transportation Research Group,University of 
+Southampton, Uk>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation the 
+rights to use, copy, modify, merge, publish, distribute, sublicense,and/or sell copies of the Software, and to permit 
+persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the 
+Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE 
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR 
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Acknowledgement: The authors conducted this work within the Marie Curie Initial Training Network (ITN) HF Auto - Human 
+Factors of Automated Driving (PITN-GA-2013-605817).
+
+Note: the OM_Module shell class is accredited to Theodore J. Rosenthal and Jeff P. Chrstos (2013) and is provided with 
+the STISIM Open Module feature.
+************************************************************************************************************************
+*/
+
 using System;
 using System.IO;
 using Interop.TJRWinTools3;
@@ -298,7 +324,7 @@ namespace OM_Automated_Driving
         private long RightTurnButton;
         private long SignalActive;
         private short SignalToggle;
-        private long SimFrameCount;
+        private long SimFrameCount = 0;
         private float Thw;
         private int ThwCycle;
         private float VehCurSpeed;
@@ -525,6 +551,7 @@ namespace OM_Automated_Driving
                 SV.DisplayStrings[1] = "Test_Display 1 = ";
                 SV.DisplayStrings[2] = "Test_Display 2 = ";
                 SV.DisplayStrings[3] = "Hot_Damn = ";
+                SV.DisplayStrings[4] = "Frame_Count = ";
 
                 return true;
             }
@@ -702,6 +729,7 @@ namespace OM_Automated_Driving
                 DV.DisplayStrings[1] = "test1";
                 DV.DisplayStrings[2] = "test2";
                 DV.DisplayStrings[3] = "It works!! I simply can't believe it!";
+                DV.DisplayStrings[4] = Convert.ToString(SimFrameCount++);
                 
                 return true;
             }
