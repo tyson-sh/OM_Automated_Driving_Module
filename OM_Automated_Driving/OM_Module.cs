@@ -50,7 +50,7 @@ namespace OM_Automated_Driving
             ref float Clutch, ref short Gear, ref int DInput);
 
         [DispId(14)]
-        bool Dynamic(ref DYNAMICSParams Dyn);
+        bool Dynamics(ref DYNAMICSParams Dyn);
 
         [DispId(15)]
         bool HandleCrash(ref short Override, short CrashEvent, short EventIndex);
@@ -59,7 +59,7 @@ namespace OM_Automated_Driving
         bool Initialize(ref OMStaticVariables SV, int[] WorldIndex, TJR3DGraphics GraphicsIn, STI_3D_Terrain TerrainIn);
 
         [DispId(17)]
-        bool PostRun(string Comments, string DriverName, string runNumber, string DriverID);
+        bool PostRun(string Comments, string DriverName, string RunNumber, string DriverID);
 
         [DispId(18)]
         bool SavePlaybackData(ref float[] PlaybackData, ref string PlaybackString);
@@ -69,7 +69,7 @@ namespace OM_Automated_Driving
 
         [DispId(20)]
         bool StartUp(ref GAINSParams Config, object BackForm, ref OMStaticVariables SV, ref bool UseNew,
-            ref float[] PlaybackData, string PlaybackString, string ParamFile, TJRSoundEffects SoundIn);
+             float[] PlaybackData, string PlaybackString, string ParamFile, TJRSoundEffects SoundIn);
 
         [DispId(21)]
         bool Update(ref OMDynamicVariables DV, DYNAMICSParams Vehicle, short NumEvents, ref float[] EDist,
@@ -95,17 +95,17 @@ namespace OM_Automated_Driving
     {
         
         // Setup references to the STISIM Drive COM objects
-        private TJR3DGraphics _graphics = new TJR3DGraphics();
-        private TJRSoundEffects _sound = new TJRSoundEffects();
-        private STI_3D_Terrain _terrain = new STI_3D_Terrain();
-        private TJRWinToolsCls _tools = new TJRWinToolsCls();
+        TJR3DGraphics graphics = new TJR3DGraphics();
+        TJRSoundEffects sound = new TJRSoundEffects();
+        STI_3D_Terrain terrain = new STI_3D_Terrain();
+        TJRWinToolsCls tools = new TJRWinToolsCls();
         
         // Define constants for the worlds used by the graphics object
-        private const int WORLD_ROADWAY = (int)SimConstants.WORLD_ROADWAY;
-        private const int WORLD_SCREEN = (int)SimConstants.WORLD_ORTHOGRAPHIC;
+        static int WORLD_ROADWAY = Convert.ToInt32(SimConstants.WORLD_ROADWAY);
+        static int WORLD_SCREEN = Convert.ToInt32(SimConstants.WORLD_ORTHOGRAPHIC);
         
         // Instantiate all variables that are public to this class and the calling routine
-        private SimEvents Events;
+        public SimEvents Events;
         private string OM_BSAVData;
         private object OM_DashboardForm;
         private string OM_ErrorMessage;
@@ -121,32 +121,32 @@ namespace OM_Automated_Driving
         private struct DriverControlInputs
         {
             // Brake control count from the controller card
-            public float Brake { get; set; }
+            public float Brake;
             
             // Current state of the driver's input buttons
-            public int Buttons { get; set; }
+            public int Buttons;
             
             // Clutch control count from the controller card
-            public float Clutch { get; set; }
+            public float Clutch;
             
             // Current transmission gear 
-            public short Gear { get; set; }
+            public short Gear;
             
             // Steering angle count from the controller card
-            public float Steer { get; set; }
+            public float Steer;
             
             // Throttle control count from the controller card
-            public float Throttle { get; set; }
+            public float Throttle;
         }
         private DriverControlInputs Driver = new DriverControlInputs();
         
         // Define all variables that will be global to this class
         
         // User defined type containing STISIM Drive variables that change as the run progresses
-        private OMDynamicVariables DynVars;
+        private OMDynamicVariables DynVars = new OMDynamicVariables {};
         
         // Type for holding the configuration parameters
-        private GAINSParams Gains;
+        private GAINSParams Gains = new GAINSParams {};
         
         // Graphics ID for the screen world
         private int ID_Screen;
@@ -155,7 +155,7 @@ namespace OM_Automated_Driving
         private int ID_World;
         
         // User defined type containing STISIM drive variables that are fixed by the simulator
-        private OMStaticVariables StaticVars;
+        private OMStaticVariables StaticVars = new OMStaticVariables {};
 
         // Zero parameter constructor included to satisfy COM registration requirements
         public OM_Module()
@@ -177,10 +177,11 @@ namespace OM_Automated_Driving
         {
             get { return OM_ErrorMessage; }
         }
-
+        
+        // NOTE: not deep clone, potential source of error
         public SimEvents EventsIn
         {
-            set { Events = CloneEvents(value); }
+            set { Events = value; }
         }
 
         public SimEvents EventsOut
@@ -257,7 +258,7 @@ namespace OM_Automated_Driving
             
         }
 
-        public bool Dynamic(ref DYNAMICSParams Dyn)
+        public bool Dynamics(ref DYNAMICSParams Dyn)
         {
             try
             {
@@ -296,11 +297,11 @@ namespace OM_Automated_Driving
                 ID_Screen = WorldIndex[WORLD_SCREEN];
 
                 // Assign references to the main graphics and terrain objects so they can be used in other modules
-                _graphics = GraphicsIn;
-                _terrain = TerrainIn;
+                graphics = GraphicsIn;
+                terrain = TerrainIn;
 
                 // Make the static variables available to all other methods
-                StaticVars = (OMStaticVariables) CloneStructure(SV);
+                StaticVars = SV;
                 
 
                 return true;
@@ -319,8 +320,8 @@ namespace OM_Automated_Driving
             try
             {
                 // Release some of the objects that were created
-                _sound = null;
-                _tools = null;
+                sound = null;
+                tools = null;
 
                 return true;
             }
@@ -350,8 +351,8 @@ namespace OM_Automated_Driving
             try
             {
                 // Release some of the objects that were created
-                _graphics = null;
-                _terrain = null;
+                graphics = null;
+                terrain = null;
 
                 return true;
             }
@@ -363,24 +364,24 @@ namespace OM_Automated_Driving
         }
 
         public bool StartUp(ref GAINSParams Config, object BackForm, ref OMStaticVariables SV, ref bool UseNew,
-            ref float[] PlaybackData, string PlaybackString, string ParamFile, TJRSoundEffects SoundIn)
+            float[] PlaybackData, string PlaybackString, string ParamFile, TJRSoundEffects SoundIn)
         {
             try
             {
                 // Assign a reference to the local sound object so that it can be used in other modules
-                _sound = SoundIn;
+                sound = SoundIn;
 
                 StreamReader ParamsIn;
 
                 // If there is an initialization file specified then do the initializing
-                if (File.Exists(ParamFile))
+                if (File.Exists(ParamFile) && ParamFile.Length > 0)
                 {
                     ParamsIn = new StreamReader(ParamFile);
                     ParamsIn.Close();
                 }
 
                 // Save a local version of the configuration file
-                Gains = (GAINSParams) CloneStructure(Config);
+                Gains = Config;
 
                 UseNew = false;
                 return true;
