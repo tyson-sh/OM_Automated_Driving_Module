@@ -77,21 +77,28 @@ namespace OM_Automated_Driving
 
     }
     
-    [
-        Guid("b18abdab-01d8-4b10-b3f9-24d558a22ee9"),
-        ClassInterface(ClassInterfaceType.None)
+    [Guid("e802851c-de8c-4b30-afec-eecd6c87bbec"),
+     InterfaceType(ComInterfaceType.InterfaceIsIDispatch)]
+    public interface OMCOM_Events
+    {
+        // Left empty intentionally
+    }
+    
+    [Guid("b18abdab-01d8-4b10-b3f9-24d558a22ee9"), 
+     ClassInterface(ClassInterfaceType.None), 
+     ComSourceInterfaces(typeof(OMCOM_Events))
     ]
-    [
-        ComVisible(true)
-    ]
+    [ComVisible(true)]
+    [ProgId("OM_Automated_Driving.OM_Module")]
+    [Serializable]
     public class OM_Module : IOM_Module
     {
         
         // Setup references to the STISIM Drive COM objects
-        private TJR3DGraphics _graphics;
-        private TJRSoundEffects _sound;
-        private STI_3D_Terrain _terrain;
-        private TJRWinToolsCls _tools;
+        private TJR3DGraphics _graphics = new TJR3DGraphics();
+        private TJRSoundEffects _sound = new TJRSoundEffects();
+        private STI_3D_Terrain _terrain = new STI_3D_Terrain();
+        private TJRWinToolsCls _tools = new TJRWinToolsCls();
         
         // Define constants for the worlds used by the graphics object
         private const int WORLD_ROADWAY = (int)SimConstants.WORLD_ROADWAY;
