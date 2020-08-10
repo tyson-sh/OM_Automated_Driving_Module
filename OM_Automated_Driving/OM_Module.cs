@@ -211,11 +211,17 @@ namespace OM_Automated_Driving
         // TODO: Refactor into own file/class
         private struct DriverControlInputs
         {
-            // Brake control count from the controller card
-            public float Brake;
+            // Original braking input from the driver
+            public float BrakeIn;
             
+            // Braking input that will be used
+            public float BrakeOut;
+
             // Current state of the driver's input buttons
-            public int Buttons;
+            public long Buttons;
+            
+            // Save the current values of the buttons
+            public long ButtonsPrev;
             
             // Clutch control count from the controller card
             public float Clutch;
@@ -223,11 +229,17 @@ namespace OM_Automated_Driving
             // Current transmission gear 
             public short Gear;
             
-            // Steering angle count from the controller card
-            public float Steer;
+            // Original steering angle input from the driver
+            public float SteerIn;
             
-            // Throttle control count from the controller card
-            public float Throttle;
+            // Steering input that will be used
+            public float SteerOut;
+
+            // Original throttle control input from the driver
+            public float ThrottleIn;
+            
+            // Gas pedal input that will be used
+            public float ThrottleOut;
         }
         private DriverControlInputs Driver = new DriverControlInputs();
         
@@ -334,8 +346,10 @@ namespace OM_Automated_Driving
         private float BrakeSF;
         private float SteeringSF;
         private float ThrottleSF;
-
-        // Zero parameter constructor included to satisfy COM registration requirements
+        
+        /// <summary>
+        ///     Zero parameter constructor included to satisfy COM registration requirements
+        /// </summary>
         public OM_Module()
         {
         }
@@ -359,7 +373,7 @@ namespace OM_Automated_Driving
         // NOTE: not deep clone, potential source of error
         public SimEvents EventsIn
         {
-            set { Events = value; }
+            set { Events = CloneEvents(value); }
         }
 
         public SimEvents EventsOut
@@ -446,12 +460,11 @@ namespace OM_Automated_Driving
         {
             try
             {
-                Driver.Brake = Brake;
-                Driver.Buttons = DInput;
-                Driver.Clutch = Clutch;
-                Driver.Gear = Gear;
-                Driver.Steer = Steering;
-                Driver.Throttle = Throttle;
+                // Instantiate all variables local to this routine
+
+                long TurnSigState;
+
+                
 
                 Gear = 0;
                 return true;
@@ -546,7 +559,7 @@ namespace OM_Automated_Driving
                 terrain = TerrainIn;
 
                 // Make the static variables available to all other methods
-                StaticVars = SV;
+                StaticVars =  (OMStaticVariables)CloneStructure(SV);
                 
                 SV.DisplayStrings[1] = "Test_Display 1 = ";
                 SV.DisplayStrings[2] = "Test_Display 2 = ";
@@ -688,7 +701,7 @@ namespace OM_Automated_Driving
                 }
 
                 // Save a local version of the configuration file
-                Gains = Config;
+                Gains = (GAINSParams) CloneStructure(Config);
 
                 UseNew = false;
                 return true;
