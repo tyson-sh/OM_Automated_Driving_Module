@@ -113,13 +113,13 @@ namespace OM_Automated_Driving
     ///
     /// <summary>
     /// <para>
-    ///     Main class of library currently does the bulk of the work.  Will be refactored in the future to better
-    ///     reflect the single responsibility principle of object orientated design.
+    /// Main class of library currently does the bulk of the work.  Will be refactored in the future to better reflect
+    /// the single responsibility principle of object orientated design.
     /// </para>
     /// <para>
-    ///     This class must not be renamed from OM_Module.cls, otherwise interfacing capability with STISIM OM will
-    ///     be lost.  It must also be registered in the windows registry as a COM object.  use
-    ///     <c>regasm.exe path/to/this/dll</c> to perform this action.
+    /// This class must not be renamed from OM_Module.cls, otherwise interfacing capability with STISIM OM will
+    /// be lost.  It must also be registered in the windows registry as a COM object.  use
+    /// <c>regasm.exe path/to/this/dll</c> to perform this action.
     /// </para>
     /// </summary>
     /// 
@@ -139,217 +139,132 @@ namespace OM_Automated_Driving
         STI_3D_Terrain terrain = new STI_3D_Terrain();
         TJRWinToolsCls tools = new TJRWinToolsCls();
         
-        // Setup constant properties
-        private const long ACCMODE_OFF = 0;
-        private const long ACCMODE_CRUISE = 1;
-        private const long ACCMODE_FOLLOWING = 2;
-        private const long ACCMODE_ADAPTING = 3;
-        private const long AUTONOMOUS_MANUAL = 0;
-        private const long AUTONOMOUS_ACC = 1;
-        private const long AUTONOMOUS_FULL = 2;
-        private const float DELTASPEED = 3.28f * 3.5f;
-        private const float FEETPERSECTOMPH = 3600f / 5280f;
-        private const long OPTION_OFF = -1;
-        private const float NO_THREAT = -999f;
-        private const float SPEED_CONST_1 = 1.09728f;
-        private const float SPEED_CONST_2 = 5f;
-        private const float SPEED_INCREMENT = 1.61f;
-        private const float SPEED_MAX = 130f;
-        private const long TURNSIG_NONE = 0;
-        private const long TURNSIG_LEFT = 1;
-        private const long TURNSIG_RIGHT = 2;
-        private const float TURNSIG_OFF_THRESHOLD = 1f;
-        
-        // Define constants for the vehicles around the driven vehicle
-        private const long VEH_FRONT = 0;
-        private const long VEH_LEFTFRONT = 1;
-        private const long VEH_RIGHTFRONT = 2;
-        private const long VEH_LEFTREAR = 3;
-        private const long VEH_RIGHTREAR = 4;
-        
-        // Define constants for the vehicles around the driven vehicle
-        private const long BUTTON_CYCLEHEADWAYTIME = 0;
-        private const long BUTTON_DECREASESPEED = 1;
-        private const long BUTTON_INCREASESPEED = 2;
-        private const long BUTTON_ACTIVATEACC = 3;
-        private const long BUTTON_ACTIVATEHAD = 4;
-        private const long BUTTON_CANCEL = 5;
-        private const long BUTTON_LEFTLANECHANGE = 6;
-        private const long BUTTON_RIGHTLANECHANGE = 7;
-
-        // Define constants for the worlds used by the graphics object
-        static int WORLD_ROADWAY = Convert.ToInt32(SimConstants.WORLD_ROADWAY);
-        static int WORLD_SCREEN = Convert.ToInt32(SimConstants.WORLD_ORTHOGRAPHIC);
-        
-        // Assign STISIM Drive simulator constants to local constant names
-        private const int CONTROLLER_GAME = (int) ControllerConstants.CONTROLLER_GAME;
-        private const int CONTROLLER_STI_ADS_II = (int) ControllerConstants.CONTROLLER_STI_ADS_II;
-        private const int DIRECTION_DRIVER = (int) SimConstants.DIRECTION_DRIVER;
-        private const int EFFECT_BRAKING = (int) SimConstants.EFFECT_BRAKING;
-        private const int EFFECT_Cornering = (int) SimConstants.EFFECT_CORNERING;
-        private const int EVENTDEFVEHICLE = (int) SimConstants.EVENTDEFVEHICLE;
-        private const int GRAPHICS_IMAGE_OFF = (int) GraphicsConstants.GRAPHICS_IMAGE_OFF;
-        private const int GRAPHICS_IMAGE_on = (int) GraphicsConstants.GRAPHICS_IMAGE_ON;
-        private const int STAGE_ORTHAGONAL = (int) GraphicsConstants.STAGE_ORTHAGONAL;
-        private const int TEXTURE_CLAMP = (int) GraphicsConstants.TEXTURE_CLAMP;
-        private const int TURN_BUTTON_LEFT = (int) SimConstants.BUTTON_LEFT;
-        private const int TURN_BUTTON_RIGHT = (int) SimConstants.BUTTON_RIGHT;
-
-        // Instantiate all variables that are public to this class and the calling routine
-        public SimEvents Events;
+        // Dimension all variables that are public to this class and the calling routine
         private string OM_BSAVData;
-        private object OM_DashboardForm;
         private string OM_ErrorMessage;
-        private int OM_LogFileHandle;
+        private long OM_LogFileHandle;
         private object OM_NewForm;
-        private short OM_SaveControls;
-        private object OM_StartForm;
+        private int OM_SaveControls;
         private string OM_TextMessage;
-        private int OM_WillHandleCrash;
-        
+        private long OM_WillHandleCrash;
+
         // Create a type for the driver input information
         // TODO: Refactor into own file/class
         private struct DriverControlInputs
         {
-            // Original braking input from the driver
-            public float BrakeIn;
-            
-            // Braking input that will be used
-            public float BrakeOut;
-
-            // Current state of the driver's input buttons
-            public long Buttons;
-            
-            // Save the current values of the buttons
-            public long ButtonsPrev;
-            
-            // Clutch control count from the controller card
-            public float Clutch;
-            
-            // Current transmission gear 
-            public short Gear;
-            
-            // Original steering angle input from the driver
-            public float SteerIn;
-            
-            // Steering input that will be used
-            public float SteerOut;
-
-            // Original throttle control input from the driver
+            public float Steer;
             public float ThrottleIn;
-            
-            // Gas pedal input that will be used
             public float ThrottleOut;
+            public float BreakOut;
+            public float BreakIn;
+            public int Gear;
+            public long Buttons;
+            public long DInput;
+            public float SteerOut;
+            public float Clutch;
         }
+        
         private DriverControlInputs Driver = new DriverControlInputs();
-        
-        // Create a type and variable
-        // TODO: Refactor into own file/class
-        private struct PIDValues
-        {
-            public float Derivative;
-            public float Integral;
-            public float proportional;
-        }
-        
-        // TODO: Refactor into own file/class
-        private struct InputParams
-        {
-            public float BrakeGain;
-            public long[] Buttons;
-            public PIDValues CruisePID;
-            public PIDValues FollowPID;
-            public float[] Headway;
-            public string Image_ACC;
-            public string Image_HAD;
-            public float Image_Left;
-            public float Image_Size;
-            public float Image_Top;
-            public float LaneChangeDelay;
-            public PIDValues LanePID;
-            public long LimitSpeed;
-            public float Range;
-            public float SteeringGain;
-            public float SteeringLimit;
-            public float ThrottleGain;
-        }
-        
-        InputParams Params = new InputParams();
-        
-        // Create a type for holding other vehicle information
-        // TODO: Refactor into own file/class
-        private struct DetectedVehicle
-        {
-            public float Distance;
-            public long VehicleIndex;
-        }
-        
-        // Create a type for holding information for the screen objects
-        // TODO: Refactor into own file/class
-        private struct ScreenObjects
-        {
-            public string Description;
-            public long Handle;
-            public long ModelID;
-            public SixDOFPosition SixDOF;
-            public long VisIndex;
-        }
-        
-        ScreenObjects ACCDisplay = new ScreenObjects();
-        ScreenObjects LaneKeepingDisplay = new ScreenObjects();
-        
-        // Define variables that will be global to this class and hold OM information
-        private long BrakeTravel;
-        private long ButtonPressed;
-        private long DriveOnLeft;
-        private long LaneTarget;
-        private long ThrottleTravel;
 
-        // Define all variables that will be global to this class
+        private bool tempBool;
+        private OMDynamicVariables DynVars = new OMDynamicVariables();
+        private OMStaticVariables StaticVars = new OMStaticVariables();
+        private int PlaybackMode;
+        private string tempSt;
+        private long[] WorldIndex;
         
-        // User defined type containing STISIM Drive variables that change as the run progresses
-        private OMDynamicVariables DynVars = new OMDynamicVariables {};
+        // Create type for vehicle information
+        // TODO: refactor into own file/class
+        private struct vehicle
+        {
+            public float Acceleration;
+            public long BrakeModel;
+            public long index;
+            public float InitialHeading;
+            public double lat;
+            public double lon;
+            public SixDOFPosition SixDOF;
+            public float speed;
+            public float SpinDuration;
+            public long SpinModel;
+            public float SpinSpeed;
+            public long VisFlag;
+        }
+
+        private vehicle[] v;
         
-        // Type for holding the configuration parameters
-        private GAINSParams Gains = new GAINSParams {};
-        
-        // Graphics ID for the screen world
-        private int ID_Screen;
-        
-        // Graphics ID for the world view
-        private int ID_World;
-        
-        // User defined type containing STISIM drive variables that are fixed by the simulator
-        private OMStaticVariables StaticVars = new OMStaticVariables {};
-        
-        // Define some autonomous objects
-        private Controller Cruise = new Controller();
-        private Controller Follow = new Controller();
-        private Controller LateralPos = new Controller();
-        private Bezier Trajectory = new Bezier();
-        
-        // Define variables that will be global to this class and hold OM information
-        private int ACCMode;
+        // FROM TRFQuery.cls
+        public struct SurrVehicle
+        {
+            public float Acceleration;
+            public SixDOFPosition SixDOF;
+            public float Speed;
+            public float Xpos;
+            public float Ypos;
+            public double range;
+            public int currentLane;
+            public int direction;
+            public float length;
+            public bool updated;
+            public float LatPos;
+        }
+
+        private SurrVehicle VAhead;
+        private SurrVehicle VNextAhead;
+        private SurrVehicle lahead;
+        private SurrVehicle rahead;
+        private SurrVehicle Lbehind;
+        private SurrVehicle Rbehind;
+        private TRFQuery traffic;
+
+        private Controller cruise;
+        private Controller follow;
+        private Controller lat;
+        private Bezier linearplanner;
+        private long simulationtime;
+        private int Freq;
+        private double thw;
+        private int THWCycle;
+        private float vTarget;
+        private float Vset;
+        private float vCurr;
+        private int mode;
+        private long DriverInputPrev;
         private int ControlMode;
-        private bool LaneControlActive;
-        private long LeftTurnButton;
-        private long RightTurnButton;
-        private long SignalActive;
-        private short SignalToggle;
-        private long SimFrameCount = 0;
-        private float Thw;
-        private int ThwCycle;
-        private float VehCurSpeed;
-        private float VehTargetSpeed;
-        
-        // Scaling for controller values
-        private float BrakeSF;
-        private float SteeringSF;
-        private float ThrottleSF;
-        
-        /// <summary>
-        ///     Zero parameter constructor included to satisfy COM registration requirements
-        /// </summary>
+        private int LaneTarget;
+        private int CurrentLane;
+        private double calcThw;
+        private double TTX;
+        private bool running;
+        private long cycleTHWBtn;
+        private long ACCup;
+        private long ACCDown;
+        private long ActivateACC;
+        private long ActivateHAD;
+        private long CancelAutomation;
+        private long LeftLaneChange;
+        private long RightLaneChange;
+        private long[] buttonArrary = new long[9];
+        private string[] eventArray = new string[2];
+        private int TOR;
+        private double TORCD;
+        private double TORLim;
+
+        private double ThrottleSF;
+        private double BrakeSF;
+        private double SteeringSF;
+        private long BrakeMin;
+        private bool setup;
+
+        private ClientClass socket;
+        private int timecounter;
+        private string lahead_;
+        private string rahead_;
+        private string rbehind_;
+        private string lbehind_;
+        private string ahead;
+        private string msg;
+        // Zero parameter constructor included to satisfy COM registration requirements
         public OM_Module()
         {
         }
@@ -373,7 +288,7 @@ namespace OM_Automated_Driving
         // NOTE: not deep clone, potential source of error
         public SimEvents EventsIn
         {
-            set { Events = CloneEvents(value); }
+            set { Events = value; }
         }
 
         public SimEvents EventsOut
@@ -460,13 +375,7 @@ namespace OM_Automated_Driving
         {
             try
             {
-                // Instantiate all variables local to this routine
-
-                long TurnSigState;
-
                 
-
-                Gear = 0;
                 return true;
             }
             catch (Exception e)
@@ -559,12 +468,8 @@ namespace OM_Automated_Driving
                 terrain = TerrainIn;
 
                 // Make the static variables available to all other methods
-                StaticVars =  (OMStaticVariables)CloneStructure(SV);
+                StaticVars = SV;
                 
-                SV.DisplayStrings[1] = "Test_Display 1 = ";
-                SV.DisplayStrings[2] = "Test_Display 2 = ";
-                SV.DisplayStrings[3] = "Hot_Damn = ";
-                SV.DisplayStrings[4] = "Frame_Count = ";
 
                 return true;
             }
@@ -701,7 +606,7 @@ namespace OM_Automated_Driving
                 }
 
                 // Save a local version of the configuration file
-                Gains = (GAINSParams) CloneStructure(Config);
+                Gains = Config;
 
                 UseNew = false;
                 return true;
@@ -739,11 +644,6 @@ namespace OM_Automated_Driving
             try
             {
                 DynVars = (OMDynamicVariables) CloneStructure(DV);
-                DV.DisplayStrings[1] = "test1";
-                DV.DisplayStrings[2] = "test2";
-                DV.DisplayStrings[3] = "It works!! I simply can't believe it!";
-                DV.DisplayStrings[4] = Convert.ToString(SimFrameCount++);
-                
                 return true;
             }
             catch (Exception e)

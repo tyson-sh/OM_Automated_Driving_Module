@@ -11,7 +11,7 @@
         <AssemblyName>OM_Automated_Driving</AssemblyName>
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <FileAlignment>512</FileAlignment>
-        <LangVersion>5</LangVersion>
+        <LangVersion>7.2</LangVersion>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
         <PlatformTarget>x86</PlatformTarget>
@@ -44,9 +44,11 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="Bezier.cs" />
+        <Compile Include="ClientClass.cs" />
         <Compile Include="Controller.cs" />
         <Compile Include="OM_Module.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="TRFQuery.cs" />
     </ItemGroup>
     <ItemGroup>
       <Content Include=".gitignore" />
