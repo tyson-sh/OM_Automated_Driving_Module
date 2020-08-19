@@ -292,7 +292,7 @@ namespace OM_Automated_Driving
         private struct ScreenObjects
         {
             public string Description;
-            public long Handle;
+            public int Handle;
             public long ModelID;
             public SixDOFPosition SixDOF;
             public long VisIndex;
@@ -628,6 +628,8 @@ namespace OM_Automated_Driving
         {
             try
             {
+                // Disable the autonomous system
+                LaneControlActive = false;
                 Override = 0;
                 return true;
             }
@@ -659,6 +661,18 @@ namespace OM_Automated_Driving
         {
             try
             {
+                // Dimension all variables local to this routine
+                long lng;
+                int ModelIndex; // Change from long to int (no implicit conversion for ref params)
+                int NumVerts; // Change from long to int (no implicit conversion for ref params)
+                ColorAttributes PolyColor;
+                float[] UT = new float[4];
+                float[] VT = new float[4];
+                float[] XPoly = new float[4];
+                float[] YPoly = new float[4];
+                float[] ZPoly = new float[4];
+                
+                
                 // Get the handles to the simulator's 3D roadway world and 2D screen world
                 ID_World = WorldIndex[WORLD_ROADWAY];
                 ID_Screen = WorldIndex[WORLD_SCREEN];
@@ -670,6 +684,97 @@ namespace OM_Automated_Driving
                 // Make the static variables available to all other methods
                 StaticVars =  (OMStaticVariables)CloneStructure(SV);
                 
+                // Setup our autonomous vehicle classes
+                SetupPIDController(ref Cruise, ref Params.CruisePID);
+                SetupPIDController(ref Follow, ref Params.FollowPID);
+                SetupPIDController(ref LateralPos, ref Params.LanePID);
+                
+                // Set some initial values
+                ControlMode = AUTONOMOUS_MANUAL;
+                LaneControlActive = false;
+                VehTargetSpeed = 60;
+                SignalActive = TURNSIG_NONE;
+                
+                // Set the initial headway settings
+                ThwCycle = 2;
+                Thw = Params.Headway[ThwCycle];
+                
+                // Add a couple of display images to the dashboard overlay form
+                NumVerts = 4;
+                XPoly[0] = 0;
+                XPoly[1] = 0;
+                XPoly[2] = 0;
+                XPoly[3] = 0;
+                YPoly[0] = 0;
+                ZPoly[0] = 0;
+                YPoly[1] = YPoly[0]; // WTF
+                ZPoly[1] = Params.Image_Size * StaticVars.SimWindow.Height;
+                YPoly[2] = Params.Image_Size * StaticVars.SimWindow.Width;
+                ZPoly[2] = ZPoly[1];
+                YPoly[3] = YPoly[2];
+                ZPoly[3] = ZPoly[0];
+                
+                // Setup our texture coordinates
+                UT[0] = 0;
+                VT[0] = 0;
+                UT[1] = UT[0];
+                VT[1] = 1;
+                UT[2] = 1;
+                VT[2] = VT[1];
+                UT[3] = UT[2];
+                VT[3] = VT[0];
+                
+                // Define the polygon color
+                PolyColor.Red = 1;
+                PolyColor.Green = 1;
+                PolyColor.Blue = 1;
+                PolyColor.Alpha = 1;
+                
+                // Create the ACC image
+                if (tools.FileExist(Params.Image_ACC))
+                {
+                    // Start the model definition
+                    ACCDisplay.Description = "OM_ACC_Display";
+                    ModelIndex = GraphicsIn.StartModelDefinition(ref ACCDisplay.Description, 
+                        ref ID_Screen, Convert.ToInt32(NumVerts));
+                    
+                    // Pass the information to the graphics renderer
+                    lng = graphics.SetMaterial(Params.Image_ACC, PolyColor, TEXTURE_CLAMP, null, null, null);
+                    graphics.AddGLPrimitive( NumVerts, XPoly, YPoly, ZPoly, UT, VT, ID_Screen, ModelIndex);
+                    lng = graphics.EndModelDefinition(ID_Screen, ModelIndex);
+                    
+                    // Set the background position on the screen
+                    ACCDisplay.SixDOF.Y = StaticVars.SimWindow.OffsetX + Params.Image_Left * StaticVars.SimWindow.Width;
+                    ACCDisplay.SixDOF.Z = StaticVars.SimWindow.OffsetY + Params.Image_Top * StaticVars.SimWindow.Height;
+                    ACCDisplay.Handle = graphics.LoadGraphicObject(ACCDisplay.SixDOF, ID_Screen, null,
+                        ACCDisplay.Description, STAGE_ORTHAGONAL);
+                    graphics.SetObjectPosition(ACCDisplay.Handle, ACCDisplay.SixDOF);
+                    graphics.SetObjectVisibility(ACCDisplay.Handle, GRAPHICS_IMAGE_OFF);
+                }
+                
+                // Create the HAD image
+                if (tools.FileExist(Params.Image_HAD))
+                {
+
+                    // Start the model definition
+                    LaneKeepingDisplay.Description = "OM_HAD_Display";
+                    ModelIndex = graphics.StartModelDefinition(LaneKeepingDisplay.Description, ID_Screen, NumVerts);
+
+                    // Pass the information to the graphics renderer
+                    lng = graphics.SetMaterial(Params.Image_HAD, PolyColor, TEXTURE_CLAMP, null, null, null);
+                    graphics.AddGLPrimitive(NumVerts, XPoly, YPoly, ZPoly, UT, VT, ID_Screen, ModelIndex);
+                    lng = graphics.EndModelDefinition(ID_Screen, ModelIndex);
+
+                    // Set the background Position on the screen
+                    ACCDisplay.SixDOF.Y = StaticVars.SimWindow.OffsetX + Params.Image_Left * StaticVars.SimWindow.Width;
+                    ACCDisplay.SixDOF.Z = StaticVars.SimWindow.OffsetY -
+                                          (Params.Image_Top - Params.Image_Size) * StaticVars.SimWindow.Height;
+                    ACCDisplay.Handle = graphics.LoadGraphicObject(ACCDisplay.SixDOF, ID_Screen, null,
+                        ACCDisplay.Description, STAGE_ORTHAGONAL);
+                    graphics.SetObjectPosition(ACCDisplay.Handle, ACCDisplay.SixDOF);
+                    graphics.SetObjectVisibility(ACCDisplay.Handle, GRAPHICS_IMAGE_OFF);
+                }
+
                 SV.DisplayStrings[1] = "Test_Display 1 = ";
                 SV.DisplayStrings[2] = "Test_Display 2 = ";
                 SV.DisplayStrings[3] = "Hot_Damn = ";
@@ -680,8 +785,11 @@ namespace OM_Automated_Driving
             }
             catch (Exception e)
             {
-                OM_ErrorMessage = "Initialize" + e.Message;
-                return false;
+                OM_ErrorMessage = "Initialize Module threw an exception " + Environment.NewLine + 
+                                  "Message: " + e.Message + Environment.NewLine + 
+                                  "Source: " + e.Source +
+                                  "Data " + e.Data + Environment.NewLine + "Stack trace: " + e.StackTrace;
+                return false; 
             }
             
         }
@@ -903,6 +1011,13 @@ namespace OM_Automated_Driving
                 TURNSIG_RIGHT => ~((~Buttons) | (~RightTurnButton)),
                 _ => Buttons
             };
+        }
+
+        private void SetupPIDController(ref Controller controller, ref PIDValues Values)
+        {
+            controller.KDerivative = Values.Derivative;
+            controller.KIntegral = Values.Integral;
+            controller.KProportional = Values.proportional;
         }
     }
 }
