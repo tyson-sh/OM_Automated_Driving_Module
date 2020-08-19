@@ -160,6 +160,9 @@ namespace OM_Automated_Driving
         private const long TURNSIG_RIGHT = 2;
         private const float TURNSIG_OFF_THRESHOLD = 1f;
         
+        // TODO Remove
+        private int DisplayTemp;
+        
         // Define constants for the vehicles around the driven vehicle
         private const long VEH_FRONT = 0;
         private const long VEH_LEFTFRONT = 1;
@@ -189,7 +192,7 @@ namespace OM_Automated_Driving
         private const int EFFECT_Cornering = (int) SimConstants.EFFECT_CORNERING;
         private const int EVENTDEFVEHICLE = (int) SimConstants.EVENTDEFVEHICLE;
         private const int GRAPHICS_IMAGE_OFF = (int) GraphicsConstants.GRAPHICS_IMAGE_OFF;
-        private const int GRAPHICS_IMAGE_on = (int) GraphicsConstants.GRAPHICS_IMAGE_ON;
+        private const int GRAPHICS_IMAGE_ON = (int) GraphicsConstants.GRAPHICS_IMAGE_ON;
         private const int STAGE_ORTHAGONAL = (int) GraphicsConstants.STAGE_ORTHAGONAL;
         private const int TEXTURE_CLAMP = (int) GraphicsConstants.TEXTURE_CLAMP;
         private const int TURN_BUTTON_LEFT = (int) SimConstants.BUTTON_LEFT;
@@ -329,8 +332,8 @@ namespace OM_Automated_Driving
         private Bezier Trajectory = new Bezier();
         
         // Define variables that will be global to this class and hold OM information
-        private int ACCMode;
-        private int ControlMode;
+        private long ACCMode; // Change from int to long (no implicit conversion in c#)
+        private long ControlMode; // Change from int to long (no implicit conversion in c#)
         private bool LaneControlActive;
         private long LeftTurnButton;
         private long RightTurnButton;
@@ -456,16 +459,122 @@ namespace OM_Automated_Driving
         /// </returns>
         /// 
         public bool ControlInputs(DYNAMICSParams Dyn, ref float Steering, ref float Throttle, ref float Brake,
-            ref float Clutch, ref short Gear, ref int DInput)
+            ref float Clutch, ref short Gear, ref int Buttons)
         {
             try
             {
+                DisplayTemp = Buttons;
                 // Instantiate all variables local to this routine
-
-                long TurnSigState;
-
+                long TurnSigState = 0; // If buggy move to class level static field
                 
+                // Save the current button state
+                Driver.ButtonsPrev = Driver.Buttons;
+                
+                // Make the driver inputs available to the other methods
+                Driver.BrakeIn = Brake;
+                Driver.ThrottleIn = Throttle;
+                Driver.SteerIn = Steering;
+                Driver.Gear = Gear;
+                Driver.Buttons = Buttons;
+                
+                // If the driver applies the gas or brake pedal, turn the system off
+                if ((Brake > 0.025 * BrakeTravel) || (Throttle > 0.025 * ThrottleTravel))
+                {
+                    ACCMode = ACCMODE_OFF;
+                    ControlMode = AUTONOMOUS_MANUAL;
+                    TurnDisplayOff();
+                }
+                
+                // Depending on which driving mode we are in, set the driver inputs that will be passed back
+                // TODO: Seriously rethink the structure of this nested switch statement
 
+                switch (ControlMode)
+                {
+                    // Full manual mode
+                    case AUTONOMOUS_MANUAL:
+                        Steering = Driver.SteerIn;
+                        Throttle = Driver.ThrottleIn;
+                        Brake = Driver.BrakeIn;
+                        SignalActive = TURNSIG_NONE;
+                        break;
+                    
+                    // Lateral automation mode
+                    case AUTONOMOUS_ACC:
+                        
+                        switch (ACCMode)
+                        {
+                            case ACCMODE_OFF:
+                                Throttle = Driver.ThrottleIn;
+                                Brake = Driver.BrakeIn;
+                                break;
+                            
+                            case ACCMODE_CRUISE:
+                                Throttle = Driver.ThrottleOut;
+                                Brake = Driver.BrakeIn;
+                                break;
+                            
+                            case ACCMODE_FOLLOWING:
+                                Throttle = Driver.ThrottleOut;
+                                Brake = Driver.BrakeOut;
+                                break;
+
+                        }
+                        break;
+                    
+                    // Longitudinal automation mode
+                    case AUTONOMOUS_FULL:
+                        Steering = Driver.SteerOut;
+                        Throttle = Driver.ThrottleOut;
+                        Brake = Driver.BrakeOut;
+                        break;
+                }
+                
+                // Limit our inputs
+                if (ControlMode != AUTONOMOUS_MANUAL)
+                {
+                    if (Throttle < 0)
+                    {
+                        Throttle = 0;
+                    }
+
+                    if (Throttle > ThrottleTravel)
+                    {
+                        Throttle = ThrottleTravel;
+                    }
+
+                    if (Brake < 0)
+                    {
+                        Brake = 0;
+                    }
+
+                    if (Brake > BrakeTravel)
+                    {
+                        Brake = BrakeTravel;
+                    }
+                }
+                
+                // Handle the turn signals if an auto lane change has been commanded
+                // NOTE: What happens if zero?
+                if (SignalToggle != 0) // Potentially buggy
+                {
+                    if ((TurnSigState - SignalActive) > 0)
+                    {
+                        // Beware Overflow
+                        Buttons = Convert.ToInt32(ProcessSignal(SignalActive, Buttons));
+                    } 
+                    else
+                    {
+                        // Beware Overflow
+                        Buttons = Convert.ToInt32(ProcessSignal(TurnSigState, Buttons));
+                    }
+                }
+                else
+                {
+                    Buttons = Convert.ToInt32(ProcessSignal(SignalActive, Buttons));
+                }
+
+                TurnSigState = SignalActive;
+                
                 Gear = 0;
                 return true;
             }
@@ -476,7 +585,7 @@ namespace OM_Automated_Driving
             }
             
         }
-        
+
         ///
         /// <summary>
         ///     Function for handling all Open Module dynamic updates.
@@ -565,6 +674,7 @@ namespace OM_Automated_Driving
                 SV.DisplayStrings[2] = "Test_Display 2 = ";
                 SV.DisplayStrings[3] = "Hot_Damn = ";
                 SV.DisplayStrings[4] = "Frame_Count = ";
+                SV.DisplayStrings[5] = "Button State: ";
 
                 return true;
             }
@@ -743,6 +853,7 @@ namespace OM_Automated_Driving
                 DV.DisplayStrings[2] = "test2";
                 DV.DisplayStrings[3] = "It works!! I simply can't believe it!";
                 DV.DisplayStrings[4] = Convert.ToString(SimFrameCount++);
+                DV.DisplayStrings[5] = Convert.ToString(DisplayTemp);
                 
                 return true;
             }
@@ -772,6 +883,26 @@ namespace OM_Automated_Driving
             st = "(custom) Simulation run aborted! an error has occurred in Open Module " + ModuleName;
             st = "";
             return st;
+        }
+
+        private void TurnDisplayOff()
+        {
+            graphics.SetObjectVisibility((int)ACCDisplay.Handle, GRAPHICS_IMAGE_OFF);
+            graphics.SetObjectVisibility((int)LaneKeepingDisplay.Handle, GRAPHICS_IMAGE_OFF);
+            SignalActive = TURNSIG_NONE;
+        }
+        
+        private long ProcessSignal(long state, long Buttons)
+        {
+            // New to bitwise operations, this could be false
+            // Also while comments indicate that left = 2 && right = 1, In the variable definitions
+            // it is the inverse. Potentially a bug
+            return state switch
+            {
+                TURNSIG_LEFT => ~((~Buttons) | (~LeftTurnButton)),
+                TURNSIG_RIGHT => ~((~Buttons) | (~RightTurnButton)),
+                _ => Buttons
+            };
         }
     }
 }
