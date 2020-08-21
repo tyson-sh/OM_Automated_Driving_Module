@@ -252,7 +252,7 @@ namespace OM_Automated_Driving
         {
             public float Derivative;
             public float Integral;
-            public float proportional;
+            public float Proportional;
         }
         
         // TODO: Refactor into own file/class
@@ -775,12 +775,6 @@ namespace OM_Automated_Driving
                     graphics.SetObjectVisibility(ACCDisplay.Handle, GRAPHICS_IMAGE_OFF);
                 }
 
-                SV.DisplayStrings[1] = "Test_Display 1 = ";
-                SV.DisplayStrings[2] = "Test_Display 2 = ";
-                SV.DisplayStrings[3] = "Hot_Damn = ";
-                SV.DisplayStrings[4] = "Frame_Count = ";
-                SV.DisplayStrings[5] = "Button State: ";
-
                 return true;
             }
             catch (Exception e)
@@ -906,20 +900,291 @@ namespace OM_Automated_Driving
         {
             try
             {
+                
+                // Dimension all variables local to this routine
+                int ErrorType;
+                int FileNum;
+                string FileParam = "";
+                int I;
+                int J;
+                string ParamName;
+                string ParamVal;
+                
                 // Assign a reference to the local sound object so that it can be used in other modules
                 sound = SoundIn;
-
-                StreamReader ParamsIn;
-
-                // If there is an initialization file specified then do the initializing
-                if (File.Exists(ParamFile) && ParamFile.Length > 0)
+                
+                // Make sure we have a set of controls and that the system is not set for autopilot.
+                // If it is, throw error and abort simulation run
+                if ((Config.IControlFlag < CONTROLLER_GAME) || (Config.IControlFlag > CONTROLLER_STI_ADS_II))
                 {
-                    ParamsIn = new StreamReader(ParamFile);
-                    ParamsIn.Close();
+                    ErrorType = 1;
+                    throw new InvalidOperationException("An error occured");
+                }
+                
+                // TODO: Potential bug... Test this later
+                if (Convert.ToBoolean(Config.IAutoPilot))
+                {
+                    throw new InvalidOperationException("System is in autopilot mode");
+                }
+                
+                // Setup any labels that will be used to display data in the STISIM Drive runtime window display
+
+                if (SV.DisplaySystem.Equals("CenterDisplay"))
+                {
+                    SV.DisplayStrings[1] = "Autonomous Mode";
+                    SV.DisplayStrings[2] = "ACC Mode";
+                }
+                
+                // Set some default values in case data is not provided in the INI file
+                Array.Resize(ref Params.Headway, 3); // Potentially mistranslated
+                Array.Resize(ref Params.Buttons, Convert.ToInt32(BUTTON_RIGHTLANECHANGE)); // Potentially mistranslated
+
+                Params.CruisePID.Derivative = 100;
+                Params.CruisePID.Integral = 2000;
+                Params.CruisePID.Proportional = 5000;
+
+                Params.FollowPID.Derivative = 5;
+                Params.FollowPID.Integral = 20;
+                Params.FollowPID.Proportional = 3000;
+                
+                // Sticking to the source... But I think that this Section should be LanePID
+                Params.FollowPID.Derivative = 400;
+                Params.FollowPID.Integral = 150;
+                Params.FollowPID.Proportional = 700;
+
+                Params.Headway[0] = 1;
+                Params.Headway[1] = 1.5f;
+                Params.Headway[2] = 2;
+                Params.Range = 328;
+
+                // If there is an initialization file specified, perform the initializing
+                //
+                // NOTE: During the initial rewrite of this if statement I have deviated pretty far from the
+                // initial source.  This is because the way a file is read has changed fairly dramatically since VB6 
+                // was widely used
+                if (File.Exists(ParamFile))
+                {
+                    // Initialize stream reader (this statement also closes the reader)
+                    using (StreamReader streamReader = new StreamReader(ParamFile))
+                    {
+                        string line;
+                        while ((line = streamReader.ReadLine()) != null)
+                        {
+                            FileParam = line.Trim();
+                            if (Convert.ToBoolean(FileParam.Length))
+                            {
+                                // 1:1 conversion, not sure what tools.Extract does
+                                FileParam = tools.Extract(ref FileParam, "%", 1);
+                                ParamName = tools.Extract(FileParam, "=", 1).Trim();
+                                ParamVal = tools.Extract(FileParam, "=", 2).Trim();
+
+                                if (!ParamName.Substring(0).Equals("%")) 
+                                {
+                                    switch (ParamName.ToUpper())
+                                    {
+                                        case "CYCLE HEADWAY TIME" : 
+                                            Params.Buttons[BUTTON_CYCLEHEADWAYTIME] = Convert.ToInt64(ParamVal);
+                                            break;
+                                        
+                                        case "DECREASE VEHICLE SPEED" :
+                                            Params.Buttons[BUTTON_DECREASESPEED] = Convert.ToInt64(ParamVal);
+                                            break;
+                                        
+                                        case "INCREASE VEHICLE SPEED" :
+                                            Params.Buttons[BUTTON_INCREASESPEED] = Convert.ToInt64(ParamVal);
+                                            break;
+                                        
+                                        case "ACTIVATE ACC" :
+                                            Params.Buttons[BUTTON_ACTIVATEACC] = Convert.ToInt64(ParamVal);
+                                            break;
+                                        
+                                        case "ACTIVATE HAD" :
+                                            Params.Buttons[BUTTON_ACTIVATEHAD] = Convert.ToInt64(ParamVal);
+                                            break;
+                                        
+                                        case "CANCEL AUTONOMOUS MODE" :
+                                            Params.Buttons[BUTTON_CANCEL] = Convert.ToInt64(ParamVal);
+                                            break;
+                                        
+                                        case "COMMAND LEFT LANE CHANGE" :
+                                            Params.Buttons[BUTTON_LEFTLANECHANGE] = Convert.ToInt64(ParamVal);
+                                            break;
+                                        
+                                        case "COMMAND RIGHT LANE CHANGE" :
+                                            Params.Buttons[BUTTON_RIGHTLANECHANGE] = Convert.ToInt64(ParamVal);
+                                            break;
+                                        
+                                        case "EXCEED SPEED LIMIT" :
+                                            Params.LimitSpeed = Convert.ToInt64(ParamVal);
+                                            break;
+                                        
+                                        case "BRAKE GAIN" :
+                                            Params.BrakeGain = Convert.ToSingle(ParamVal);
+                                            break;
+                                        
+                                        case "THROTTLE GAIN" :
+                                            Params.ThrottleGain = Convert.ToSingle(ParamVal);
+                                            break;
+                                        
+                                        case "STEERING GAIN" :
+                                            Params.SteeringGain = Convert.ToSingle(ParamVal);
+                                            break;
+                                        
+                                        case "STEERING INPUT LIMIT" :
+                                            Params.SteeringLimit = Convert.ToSingle(ParamVal);
+                                            break;
+                                        
+                                        case "HEADWAY TIME SMALL" :
+                                            Params.Headway[0] = Convert.ToSingle(ParamVal);
+                                            break;
+                                        
+                                        case "HEADWAY TIME MODERATE" :
+                                            Params.Headway[1] = Convert.ToSingle(ParamVal);
+                                            break;
+                                        
+                                        case "HEADWAY TIME LARGE" :
+                                            Params.Headway[2] = Convert.ToSingle(ParamVal);
+                                            break;
+                                        
+                                        case "RANGE" :
+                                            Params.Range = Convert.ToSingle(ParamVal);
+                                            break;
+                                        
+                                        case "CRUISE PROPORTIONAL" :
+                                            Params.CruisePID.Proportional = Convert.ToSingle(ParamVal);
+                                            break;
+                                        
+                                        case "CRUISE INTEGRAL" :
+                                            Params.CruisePID.Integral = Convert.ToSingle(ParamVal);
+                                            break;
+                                        
+                                        case "CRUISE DERIVATIVE" :
+                                            Params.CruisePID.Derivative = Convert.ToSingle(ParamVal);
+                                            break;
+                                        
+                                        case "FOLLOW PROPORTIONAL" :
+                                            Params.FollowPID.Proportional = Convert.ToSingle(ParamVal);
+                                            break;
+                                        
+                                        case "FOLLOW INTEGRAL" :
+                                            Params.FollowPID.Integral = Convert.ToSingle(ParamVal);
+                                            break;
+                                        
+                                        case "FOLLOW DERIVATIVE" :
+                                            Params.FollowPID.Derivative = Convert.ToSingle(ParamVal);
+                                            break;
+                                        
+                                        case "LANE CHANGE PROPORTIONAL" :
+                                            Params.LanePID.Proportional = Convert.ToSingle(ParamVal);
+                                            break;
+                                        
+                                        case "LANE CHANGE INTEGRAL" :
+                                            Params.LanePID.Integral = Convert.ToSingle(ParamVal);
+                                            break;
+                                        
+                                        case "LANE CHANGE DERIVATIVE" :
+                                            Params.LanePID.Derivative = Convert.ToSingle(ParamVal);
+                                            break;
+                                        
+                                        case "LANE CHANGE DELAY" :
+                                            Params.LaneChangeDelay = Convert.ToSingle(ParamVal);
+                                            break;
+                                        
+                                        case "ACCMODE IMAGE" :
+                                            Params.Image_ACC = ParamVal.Trim();
+                                            break;
+                                        
+                                        case "HADMODE IMAGE" :
+                                            Params.Image_HAD = ParamVal.Trim();
+                                            break;
+                                        
+                                        case "IMAGE SIZE" :
+                                            Params.Image_Size = Convert.ToSingle(ParamVal);
+                                            break;
+                                        
+                                        case "IMAGE TOP" :
+                                            Params.Image_Top = Convert.ToSingle(ParamVal);
+                                            break;
+                                        
+                                        case "Image LEFT" :
+                                            Params.Image_Left = Convert.ToSingle(ParamVal);
+                                            break;
+                                    }
+                                }
+                                
+                            }
+                        }
+                        
+                        // Since buttons will be performing certain functions, manipulate our button settings
+                        
+                        // Get the turn signal values
+                        LeftTurnButton = Config.ExtButtonMasksLng[TURN_BUTTON_LEFT];
+                        RightTurnButton = Config.ExtButtonMasksLng[TURN_BUTTON_RIGHT];
+                        SignalToggle = Config.Dashboard.TurnSig.Toggle;
+                        
+                        // Disable any buttons that have also been assigned an autonomous function
+                        // TODO: Source starts loop at 1, usually starts at 0
+                        for (int i = 1; i < Config.ExtButtonMasksLng.Length; i++)
+                        {
+                            for (int j = 0; j < Params.Buttons.Length; j++)
+                            {
+                                if (Config.ExtButtonMasksLng[i] == Params.Buttons[j])
+                                {
+                                    Config.ExtButtonMasksLng[i] = 0;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    ErrorType = 3;
+                    throw new FileNotFoundException("Cannot locate param file");
+                }
+                
+                // Adjust config settings and pre-compute some variables using config file info
+                
+                // Get the amount the pedals will travel
+                BrakeTravel = Math.Abs(Config.IBrakeMax - Config.IBrakeMin);
+                ThrottleTravel = Math.Abs(Config.IThrottleMax - Config.IThrottleMin);
+                
+                // Get the side of the road the driver is supposed to drive on
+                DriveOnLeft = Convert.ToInt64(Config.RoadSide);
+                
+                // Compute the gains for the control axis
+                if (Convert.ToBoolean(Params.BrakeGain))
+                {
+                    BrakeSF = - Params.BrakeGain;
+                }
+                else
+                {
+                    BrakeSF = -10 * Math.Abs(Config.UDotBrkMax);
+                }
+
+                if (Convert.ToBoolean(Params.ThrottleGain))
+                {
+                    ThrottleSF = Params.ThrottleGain;
+                }
+                else
+                {
+                    ThrottleSF = 50 * Math.Abs(Config.UDotAcMax);
+                }
+
+                if (Convert.ToBoolean(Params.SteeringGain))
+                {
+                    SteeringSF = Params.SteeringGain;
+                }
+                else
+                {
+                    SteeringSF = Config.FKSW / 0.014f;
                 }
 
                 // Save a local version of the configuration file
                 Gains = (GAINSParams) CloneStructure(Config);
+                
+                // Set it so that the simulator records the inputs from this module
+                OM_SaveControls = 1;
 
                 UseNew = false;
                 return true;
@@ -957,12 +1222,7 @@ namespace OM_Automated_Driving
             try
             {
                 DynVars = (OMDynamicVariables) CloneStructure(DV);
-                DV.DisplayStrings[1] = "test1";
-                DV.DisplayStrings[2] = "test2";
-                DV.DisplayStrings[3] = "It works!! I simply can't believe it!";
-                DV.DisplayStrings[4] = Convert.ToString(SimFrameCount++);
-                DV.DisplayStrings[5] = Convert.ToString(DisplayTemp);
-                
+
                 return true;
             }
             catch (Exception e)
@@ -1017,7 +1277,7 @@ namespace OM_Automated_Driving
         {
             controller.KDerivative = Values.Derivative;
             controller.KIntegral = Values.Integral;
-            controller.KProportional = Values.proportional;
+            controller.KProportional = Values.Proportional;
         }
     }
 }
