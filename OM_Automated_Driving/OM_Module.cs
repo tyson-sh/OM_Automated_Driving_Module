@@ -666,11 +666,11 @@ namespace OM_Automated_Driving
                 int ModelIndex; // Change from long to int (no implicit conversion for ref params)
                 int NumVerts; // Change from long to int (no implicit conversion for ref params)
                 ColorAttributes PolyColor;
-                float[] UT = new float[4];
-                float[] VT = new float[4];
-                float[] XPoly = new float[4];
-                float[] YPoly = new float[4];
-                float[] ZPoly = new float[4];
+                float[] UT = new float[5];
+                float[] VT = new float[5];
+                float[] XPoly = new float[5];
+                float[] YPoly = new float[5];
+                float[] ZPoly = new float[5];
                 
                 
                 // Get the handles to the simulator's 3D roadway world and 2D screen world
@@ -700,6 +700,7 @@ namespace OM_Automated_Driving
                 Thw = Params.Headway[ThwCycle];
                 
                 // Add a couple of display images to the dashboard overlay form
+                // TODO: Should there be weird graphics bugs... Try increasing all following array indexes by one
                 NumVerts = 4;
                 XPoly[0] = 0;
                 XPoly[1] = 0;
@@ -740,7 +741,7 @@ namespace OM_Automated_Driving
                     
                     // Pass the information to the graphics renderer
                     lng = graphics.SetMaterial(Params.Image_ACC, PolyColor, TEXTURE_CLAMP, null, null, null);
-                    graphics.AddGLPrimitive( NumVerts, XPoly, YPoly, ZPoly, UT, VT, ID_Screen, ModelIndex);
+                    graphics.AddGLPrimitive(NumVerts, XPoly, YPoly, ZPoly, UT, VT, ID_Screen, ModelIndex);
                     lng = graphics.EndModelDefinition(ID_Screen, ModelIndex);
                     
                     // Set the background position on the screen
@@ -762,7 +763,7 @@ namespace OM_Automated_Driving
 
                     // Pass the information to the graphics renderer
                     lng = graphics.SetMaterial(Params.Image_HAD, PolyColor, TEXTURE_CLAMP, null, null, null);
-                    graphics.AddGLPrimitive(NumVerts, XPoly, YPoly, ZPoly, UT, VT, ID_Screen, ModelIndex);
+                    graphics.AddGLPrimitive(ref NumVerts, ref XPoly, ref YPoly, ref ZPoly, ref UT, ref VT, ref ID_Screen, ref ModelIndex);
                     lng = graphics.EndModelDefinition(ID_Screen, ModelIndex);
 
                     // Set the background Position on the screen
