@@ -937,7 +937,7 @@ namespace OM_Automated_Driving
                 
                 // Set some default values in case data is not provided in the INI file
                 Array.Resize(ref Params.Headway, 3); // Potentially mistranslated
-                Array.Resize(ref Params.Buttons, Convert.ToInt32(BUTTON_RIGHTLANECHANGE)); // Potentially mistranslated
+                Array.Resize(ref Params.Buttons, Convert.ToInt32(BUTTON_RIGHTLANECHANGE + 1)); // Potentially mistranslated
 
                 Params.CruisePID.Derivative = 100;
                 Params.CruisePID.Integral = 2000;
@@ -957,6 +957,8 @@ namespace OM_Automated_Driving
                 Params.Headway[2] = 2;
                 Params.Range = 328;
 
+                tools.WriteToTJRFile(ref OM_LogFileHandle, "Just a test");
+                
                 // If there is an initialization file specified, perform the initializing
                 //
                 // NOTE: During the initial rewrite of this if statement I have deviated pretty far from the
@@ -971,16 +973,21 @@ namespace OM_Automated_Driving
                         while ((line = streamReader.ReadLine()) != null)
                         {
                             FileParam = line.Trim();
-                            if (Convert.ToBoolean(FileParam.Length))
-                            {
-                                // 1:1 conversion, not sure what tools.Extract does
-                                FileParam = tools.Extract(ref FileParam, "%", 1);
-                                ParamName = tools.Extract(FileParam, "=", 1).Trim();
-                                ParamVal = tools.Extract(FileParam, "=", 2).Trim();
 
-                                if (!ParamName.Substring(0).Equals("%")) 
-                                {
-                                    switch (ParamName.ToUpper())
+                            // Check to make sure line is not blank
+                            if (FileParam.Length <= 0 || FileParam.Equals("")) continue;
+                            
+                            // 1:1 conversion, not sure what tools.Extract does
+                            FileParam = tools.Extract(ref FileParam, "%", 1);
+                            
+                            // Last check to ensure line is not null
+                            if (FileParam == null) continue;
+                            ParamName = tools.Extract(ref FileParam, "=", 1).Trim();
+                            ParamVal = tools.Extract(ref FileParam, "=", 2).Trim();
+
+                            if (!ParamName.Substring(0).Equals("%")) 
+                            {
+                                switch (ParamName.ToUpper())
                                     {
                                         case "CYCLE HEADWAY TIME" : 
                                             Params.Buttons[BUTTON_CYCLEHEADWAYTIME] = Convert.ToInt64(ParamVal);
@@ -1110,8 +1117,6 @@ namespace OM_Automated_Driving
                                             Params.Image_Left = Convert.ToSingle(ParamVal);
                                             break;
                                     }
-                                }
-                                
                             }
                         }
                         
