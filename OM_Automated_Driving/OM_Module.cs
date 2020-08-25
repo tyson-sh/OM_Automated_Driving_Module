@@ -210,6 +210,14 @@ namespace OM_Automated_Driving
         private string OM_TextMessage;
         private int OM_WillHandleCrash;
         
+        // Declare static variables to be used in Update() function
+        // These were originally declared in the function but C# does not support
+        // method level static variables
+        private static bool ButtonOn;
+        private static bool FirstPass = true;
+        private static float InitLane;
+        private static float StartDelay;
+        
         // Create a type for the driver input information
         // TODO: Refactor into own file/class
         private struct DriverControlInputs
@@ -989,135 +997,135 @@ namespace OM_Automated_Driving
                             if (!ParamName.Substring(0).Equals("%")) 
                             {
                                 switch (ParamName.ToUpper())
-                                    {
-                                        case "CYCLE HEADWAY TIME" : 
-                                            Params.Buttons[BUTTON_CYCLEHEADWAYTIME] = Convert.ToInt64(ParamVal);
-                                            break;
-                                        
-                                        case "DECREASE VEHICLE SPEED" :
-                                            Params.Buttons[BUTTON_DECREASESPEED] = Convert.ToInt64(ParamVal);
-                                            break;
-                                        
-                                        case "INCREASE VEHICLE SPEED" :
-                                            Params.Buttons[BUTTON_INCREASESPEED] = Convert.ToInt64(ParamVal);
-                                            break;
-                                        
-                                        case "ACTIVATE ACC" :
-                                            Params.Buttons[BUTTON_ACTIVATEACC] = Convert.ToInt64(ParamVal);
-                                            break;
-                                        
-                                        case "ACTIVATE HAD" :
-                                            Params.Buttons[BUTTON_ACTIVATEHAD] = Convert.ToInt64(ParamVal);
-                                            break;
-                                        
-                                        case "CANCEL AUTONOMOUS MODE" :
-                                            Params.Buttons[BUTTON_CANCEL] = Convert.ToInt64(ParamVal);
-                                            break;
-                                        
-                                        case "COMMAND LEFT LANE CHANGE" :
-                                            Params.Buttons[BUTTON_LEFTLANECHANGE] = Convert.ToInt64(ParamVal);
-                                            break;
-                                        
-                                        case "COMMAND RIGHT LANE CHANGE" :
-                                            Params.Buttons[BUTTON_RIGHTLANECHANGE] = Convert.ToInt64(ParamVal);
-                                            break;
-                                        
-                                        case "EXCEED SPEED LIMIT" :
-                                            Params.LimitSpeed = Convert.ToInt64(ParamVal);
-                                            break;
-                                        
-                                        case "BRAKE GAIN" :
-                                            Params.BrakeGain = Convert.ToSingle(ParamVal);
-                                            break;
-                                        
-                                        case "THROTTLE GAIN" :
-                                            Params.ThrottleGain = Convert.ToSingle(ParamVal);
-                                            break;
-                                        
-                                        case "STEERING GAIN" :
-                                            Params.SteeringGain = Convert.ToSingle(ParamVal);
-                                            break;
-                                        
-                                        case "STEERING INPUT LIMIT" :
-                                            Params.SteeringLimit = Convert.ToSingle(ParamVal);
-                                            break;
-                                        
-                                        case "HEADWAY TIME SMALL" :
-                                            Params.Headway[0] = Convert.ToSingle(ParamVal);
-                                            break;
-                                        
-                                        case "HEADWAY TIME MODERATE" :
-                                            Params.Headway[1] = Convert.ToSingle(ParamVal);
-                                            break;
-                                        
-                                        case "HEADWAY TIME LARGE" :
-                                            Params.Headway[2] = Convert.ToSingle(ParamVal);
-                                            break;
-                                        
-                                        case "RANGE" :
-                                            Params.Range = Convert.ToSingle(ParamVal);
-                                            break;
-                                        
-                                        case "CRUISE PROPORTIONAL" :
-                                            Params.CruisePID.Proportional = Convert.ToSingle(ParamVal);
-                                            break;
-                                        
-                                        case "CRUISE INTEGRAL" :
-                                            Params.CruisePID.Integral = Convert.ToSingle(ParamVal);
-                                            break;
-                                        
-                                        case "CRUISE DERIVATIVE" :
-                                            Params.CruisePID.Derivative = Convert.ToSingle(ParamVal);
-                                            break;
-                                        
-                                        case "FOLLOW PROPORTIONAL" :
-                                            Params.FollowPID.Proportional = Convert.ToSingle(ParamVal);
-                                            break;
-                                        
-                                        case "FOLLOW INTEGRAL" :
-                                            Params.FollowPID.Integral = Convert.ToSingle(ParamVal);
-                                            break;
-                                        
-                                        case "FOLLOW DERIVATIVE" :
-                                            Params.FollowPID.Derivative = Convert.ToSingle(ParamVal);
-                                            break;
-                                        
-                                        case "LANE CHANGE PROPORTIONAL" :
-                                            Params.LanePID.Proportional = Convert.ToSingle(ParamVal);
-                                            break;
-                                        
-                                        case "LANE CHANGE INTEGRAL" :
-                                            Params.LanePID.Integral = Convert.ToSingle(ParamVal);
-                                            break;
-                                        
-                                        case "LANE CHANGE DERIVATIVE" :
-                                            Params.LanePID.Derivative = Convert.ToSingle(ParamVal);
-                                            break;
-                                        
-                                        case "LANE CHANGE DELAY" :
-                                            Params.LaneChangeDelay = Convert.ToSingle(ParamVal);
-                                            break;
-                                        
-                                        case "ACCMODE IMAGE" :
-                                            Params.Image_ACC = ParamVal.Trim();
-                                            break;
-                                        
-                                        case "HADMODE IMAGE" :
-                                            Params.Image_HAD = ParamVal.Trim();
-                                            break;
-                                        
-                                        case "IMAGE SIZE" :
-                                            Params.Image_Size = Convert.ToSingle(ParamVal);
-                                            break;
-                                        
-                                        case "IMAGE TOP" :
-                                            Params.Image_Top = Convert.ToSingle(ParamVal);
-                                            break;
-                                        
-                                        case "Image LEFT" :
-                                            Params.Image_Left = Convert.ToSingle(ParamVal);
-                                            break;
-                                    }
+                                {
+                                    case "CYCLE HEADWAY TIME" : 
+                                        Params.Buttons[BUTTON_CYCLEHEADWAYTIME] = Convert.ToInt64(ParamVal);
+                                        break;
+                                    
+                                    case "DECREASE VEHICLE SPEED" :
+                                        Params.Buttons[BUTTON_DECREASESPEED] = Convert.ToInt64(ParamVal);
+                                        break;
+                                    
+                                    case "INCREASE VEHICLE SPEED" :
+                                        Params.Buttons[BUTTON_INCREASESPEED] = Convert.ToInt64(ParamVal);
+                                        break;
+                                    
+                                    case "ACTIVATE ACC" :
+                                        Params.Buttons[BUTTON_ACTIVATEACC] = Convert.ToInt64(ParamVal);
+                                        break;
+                                    
+                                    case "ACTIVATE HAD" :
+                                        Params.Buttons[BUTTON_ACTIVATEHAD] = Convert.ToInt64(ParamVal);
+                                        break;
+                                    
+                                    case "CANCEL AUTONOMOUS MODE" :
+                                        Params.Buttons[BUTTON_CANCEL] = Convert.ToInt64(ParamVal);
+                                        break;
+                                    
+                                    case "COMMAND LEFT LANE CHANGE" :
+                                        Params.Buttons[BUTTON_LEFTLANECHANGE] = Convert.ToInt64(ParamVal);
+                                        break;
+                                    
+                                    case "COMMAND RIGHT LANE CHANGE" :
+                                        Params.Buttons[BUTTON_RIGHTLANECHANGE] = Convert.ToInt64(ParamVal);
+                                        break;
+                                    
+                                    case "EXCEED SPEED LIMIT" :
+                                        Params.LimitSpeed = Convert.ToInt64(ParamVal);
+                                        break;
+                                    
+                                    case "BRAKE GAIN" :
+                                        Params.BrakeGain = Convert.ToSingle(ParamVal);
+                                        break;
+                                    
+                                    case "THROTTLE GAIN" :
+                                        Params.ThrottleGain = Convert.ToSingle(ParamVal);
+                                        break;
+                                    
+                                    case "STEERING GAIN" :
+                                        Params.SteeringGain = Convert.ToSingle(ParamVal);
+                                        break;
+                                    
+                                    case "STEERING INPUT LIMIT" :
+                                        Params.SteeringLimit = Convert.ToSingle(ParamVal);
+                                        break;
+                                    
+                                    case "HEADWAY TIME SMALL" :
+                                        Params.Headway[0] = Convert.ToSingle(ParamVal);
+                                        break;
+                                    
+                                    case "HEADWAY TIME MODERATE" :
+                                        Params.Headway[1] = Convert.ToSingle(ParamVal);
+                                        break;
+                                    
+                                    case "HEADWAY TIME LARGE" :
+                                        Params.Headway[2] = Convert.ToSingle(ParamVal);
+                                        break;
+                                    
+                                    case "RANGE" :
+                                        Params.Range = Convert.ToSingle(ParamVal);
+                                        break;
+                                    
+                                    case "CRUISE PROPORTIONAL" :
+                                        Params.CruisePID.Proportional = Convert.ToSingle(ParamVal);
+                                        break;
+                                    
+                                    case "CRUISE INTEGRAL" :
+                                        Params.CruisePID.Integral = Convert.ToSingle(ParamVal);
+                                        break;
+                                    
+                                    case "CRUISE DERIVATIVE" :
+                                        Params.CruisePID.Derivative = Convert.ToSingle(ParamVal);
+                                        break;
+                                    
+                                    case "FOLLOW PROPORTIONAL" :
+                                        Params.FollowPID.Proportional = Convert.ToSingle(ParamVal);
+                                        break;
+                                    
+                                    case "FOLLOW INTEGRAL" :
+                                        Params.FollowPID.Integral = Convert.ToSingle(ParamVal);
+                                        break;
+                                    
+                                    case "FOLLOW DERIVATIVE" :
+                                        Params.FollowPID.Derivative = Convert.ToSingle(ParamVal);
+                                        break;
+                                    
+                                    case "LANE CHANGE PROPORTIONAL" :
+                                        Params.LanePID.Proportional = Convert.ToSingle(ParamVal);
+                                        break;
+                                    
+                                    case "LANE CHANGE INTEGRAL" :
+                                        Params.LanePID.Integral = Convert.ToSingle(ParamVal);
+                                        break;
+                                    
+                                    case "LANE CHANGE DERIVATIVE" :
+                                        Params.LanePID.Derivative = Convert.ToSingle(ParamVal);
+                                        break;
+                                    
+                                    case "LANE CHANGE DELAY" :
+                                        Params.LaneChangeDelay = Convert.ToSingle(ParamVal);
+                                        break;
+                                    
+                                    case "ACCMODE IMAGE" :
+                                        Params.Image_ACC = ParamVal.Trim();
+                                        break;
+                                    
+                                    case "HADMODE IMAGE" :
+                                        Params.Image_HAD = ParamVal.Trim();
+                                        break;
+                                    
+                                    case "IMAGE SIZE" :
+                                        Params.Image_Size = Convert.ToSingle(ParamVal);
+                                        break;
+                                    
+                                    case "IMAGE TOP" :
+                                        Params.Image_Top = Convert.ToSingle(ParamVal);
+                                        break;
+                                    
+                                    case "Image LEFT" :
+                                        Params.Image_Left = Convert.ToSingle(ParamVal);
+                                        break;
+                                }
                             }
                         }
                         
@@ -1227,6 +1235,455 @@ namespace OM_Automated_Driving
         {
             try
             {
+                // Dimension all variables that are local to this routine
+                // TODO: Change these params to double to avoid potential overflow crash
+                float CalcThw;
+                long DriversLane;
+                float HalfMedian;
+                long Lane;
+                float LanePosition;
+                float LaneWidth;
+                long NumLanes;
+                long NumLanesL;
+                long NumLanesR;
+                float SpeedCommand = 0;
+                float TempSng;
+                float TempTime;
+                long VehIndex;
+                DetectedVehicle[] VehOther = new DetectedVehicle[VEH_RIGHTREAR];
+                
+                // Only allow the autonomous modes if the vehicle is moving
+                if (Vehicle.U == 0)
+                {
+                    ACCMode = ACCMODE_OFF;
+                    ControlMode = AUTONOMOUS_MANUAL;
+                    TurnDisplayOff();
+                    return true;
+                }
+                
+                // Handle any specific task that needs to be performed during only the initial pass through this function
+                if (FirstPass)
+                {
+                    Driver.ButtonsPrev = Driver.Buttons;
+                    FirstPass = false;
+                }
+                
+                // Get some variables that will be needed in our calculations
+                HalfMedian = 0.5f * Convert.ToSingle(Events.Road[Events.CurrentRoad].MedianWidth);
+                LaneWidth = Convert.ToSingle(Events.Road[Events.CurrentRoad].Width);
+                NumLanes = Events.Road[Events.CurrentRoad].NumLanes;
+                NumLanesR = Events.Road[Events.CurrentRoad].NumRLanes;
+                NumLanesL = NumLanes - NumLanesR;
+                DriversLane = DV.LaneNumber;
+                
+                // Set variables to our initial range value
+                VehIndex = OPTION_OFF;
+                for (int i = 0; i < VEH_RIGHTREAR; i++)
+                {
+                    VehOther[i].VehicleIndex = OPTION_OFF;
+                    if (i > VEH_RIGHTFRONT)
+                    {
+                        VehOther[i].Distance = -Params.Range;
+                    }
+                    else
+                    {
+                        VehOther[i].Distance = -Params.Range;
+                    }
+                } 
+                
+                // Loop through the number of active events looking for vehicles
+                // TODO: Seriously reconsider using nested switch statements
+                for (int i = 0; i < NumEvents; i++)
+                {
+                    // TODO: Switch only has one branch
+                    switch (EDes[i])
+                    {
+                        case EVENTDEFVEHICLE :
+                            
+                            // Vehicle is in the driven vehicles lane
+                            if (Events.Vehicles[EIndex[i]].LaneNumber == DriversLane)
+                            {
+                                VehIndex = VEH_FRONT;
+                            }
+                            
+                            // Vehicle is to the left of the driven vehicle
+                            else if (Events.Vehicles[EIndex[i]].LaneNumber == (DriversLane - 1))
+                            {
+                                
+                                // Determine if the vehicle is in front
+                                if (EDist[i] > 1)
+                                {
+                                    VehIndex = VEH_LEFTFRONT;
+                                }
+                                
+                                // Or behind
+                                else if (EDist[i] < -1)
+                                {
+                                    VehIndex = VEH_LEFTREAR;
+                                }
+                            }
+                            
+                            // Vehicle is to the right of the driven vehicle
+                            else if (Events.Vehicles[EIndex[i]].LaneNumber == (DriversLane + 1))
+                            {
+                                // Determine if the vehicle is in front
+                                if (EDist[i] > 1)
+                                {
+                                    VehIndex = VEH_RIGHTFRONT;
+                                }
+                                
+                                // Or behind
+                                else if (EDist[i] < -1)
+                                {
+                                    VehIndex = VEH_RIGHTREAR;
+                                }
+                            }
+                            
+                            // If the vehicle exists, setup the parameters
+                            if (VehIndex > (VEH_FRONT - 1))
+                            {
+                                SetOtherVehicle(ref VehOther[VehIndex], EIndex[i], EDist[i]);
+                            }
+                            
+                            break;
+                    }
+                }
+                
+                // Set the starting lane of the automation to the current lane
+                // before any control actions are carried out
+                if (!LaneControlActive)
+                {
+                    LaneTarget = DriversLane;
+                    LaneControlActive = true;
+                }
+
+                SimFrameCount++;
+                
+                // Handle button presses but only process them after the button has been released
+                if (Driver.ButtonsPrev != Driver.Buttons)
+                {
+                    ButtonOn = false;
+                    if (Convert.ToBoolean(ButtonPressed))
+                    {
+                        // Increase the vehicle speed
+                        if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_INCREASESPEED])
+                        {
+                            if (VehOther[VEH_FRONT].Distance > 0)
+                            {
+                                TempSng = VehTargetSpeed / SPEED_CONST_1;
+                                if (TempSng >= 0)
+                                {
+                                    if (VehTargetSpeed <= SPEED_MAX)
+                                    {
+                                        TempSng = Convert.ToSingle(((Math.Truncate(TempSng / SPEED_CONST_2)) * SPEED_CONST_2));
+                                        VehTargetSpeed = (TempSng + SPEED_CONST_2) + SPEED_CONST_1;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                VehTargetSpeed += SPEED_INCREMENT;
+                            }
+                        }
+
+                        tools.WriteToTJRFile(ref OM_LogFileHandle, (Driver.Buttons & ButtonPressed).ToString() + " vs. " + Params.Buttons[BUTTON_ACTIVATEHAD].ToString());
+                        // Decrease the vehicle speed
+                        if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_DECREASESPEED])
+                        {
+                            if (VehOther[VEH_FRONT].Distance > 0)
+                            {
+                                TempSng = VehTargetSpeed / SPEED_CONST_1;
+                                if (TempSng >= 0)
+                                {
+                                    TempSng = Convert.ToSingle(
+                                        (Math.Truncate(TempSng / SPEED_CONST_2)) * SPEED_CONST_2);
+                                    VehTargetSpeed = (TempSng - SPEED_CONST_2) * SPEED_CONST_1;
+                                }
+                            }
+                            else
+                            {
+                                VehTargetSpeed -= SPEED_INCREMENT;
+                            }
+                        }
+                        
+                        // Command a lane change to the right
+                        if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_RIGHTLANECHANGE])
+                        {
+                            InitLane = LaneTarget;
+                            LaneTarget++;
+                            SignalActive = TURNSIG_RIGHT;
+                            StartDelay = DV.TimeSinceStart;
+                        }
+                        
+                        // Command a lane change to the left
+                        if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_LEFTLANECHANGE])
+                        {
+                            InitLane = LaneTarget;
+                            LaneTarget--;
+                            SignalActive = TURNSIG_LEFT;
+                            StartDelay = DV.TimeSinceStart;
+                        }
+                        
+                        // Cycle headway times
+                        if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_CYCLEHEADWAYTIME])
+                        {
+                            ThwCycle++;
+                            if (ThwCycle == 4)
+                            {
+                                ThwCycle = 1;
+                            }
+
+                            Thw = Params.Headway[ThwCycle - 1];
+                        }
+                        
+                        // Toggle the ACC system
+                        if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_ACTIVATEACC])
+                        {
+                            if (ControlMode == AUTONOMOUS_ACC)
+                            {
+                                ControlMode = AUTONOMOUS_MANUAL;
+                                TurnDisplayOff();
+                            }
+                            else
+                            {
+                                ControlMode = AUTONOMOUS_ACC;
+                                VehTargetSpeed = VehCurSpeed;
+                                graphics.SetObjectVisibility(ACCDisplay.Handle, GRAPHICS_IMAGE_ON);
+                                graphics.SetObjectVisibility(LaneKeepingDisplay.Handle, GRAPHICS_IMAGE_OFF);
+                            }
+                        }
+                        
+                        // Activate full autonomous mode
+                        if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_ACTIVATEHAD])
+                        {
+                            tools.WriteToTJRFile(ref OM_LogFileHandle, "I was reached");
+                            if (ControlMode == AUTONOMOUS_FULL)
+                            {
+                                tools.WriteToTJRFile(ref OM_LogFileHandle, "2");
+                                ControlMode = AUTONOMOUS_MANUAL;
+                                TurnDisplayOff();
+                            }
+                            else
+                            {
+                                tools.WriteToTJRFile(ref OM_LogFileHandle, "3");
+                                ControlMode = AUTONOMOUS_FULL;
+                                VehTargetSpeed = VehCurSpeed;
+                                LaneTarget = DriversLane;
+                                InitLane = DriversLane;
+                                if (InitLane > NumLanesR)
+                                {
+                                    InitLane = NumLanesL + 1;
+                                }
+                                else if (InitLane < NumLanesL)
+                                {
+                                    InitLane = NumLanesL - 1;
+                                }
+
+                                graphics.SetObjectVisibility(ACCDisplay.Handle, GRAPHICS_IMAGE_ON);
+                                graphics.SetObjectVisibility(LaneKeepingDisplay.Handle, GRAPHICS_IMAGE_OFF);
+                            }
+
+                            // Cancel all automation modes (Why is this here?)
+                            /*if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_CANCEL])
+                            {
+                                ControlMode = AUTONOMOUS_MANUAL;
+                                TurnDisplayOff();
+                            }*/
+                        }
+
+                        ButtonPressed = 0;
+                    }
+                }
+                else
+                {
+                    ButtonOn = true;
+                    ButtonPressed = Driver.Buttons;
+                }
+                
+                // Force the automation to abide by the posted speed limit.
+                // This will hinder the driver from overriding the acc set speed
+                // parameters to velocities above the speed limit
+                if (Convert.ToBoolean(Params.LimitSpeed))
+                {
+                    if (VehTargetSpeed > DV.SpeedLimit)
+                    {
+                        VehTargetSpeed = DV.SpeedLimit;
+                    }
+                }
+                
+                // Act differently based on if there is a vehicle directly in front of the driver or not
+                VehCurSpeed = Vehicle.U;
+                if (VehOther[VEH_FRONT].VehicleIndex == -1)
+                {
+                    SetACCMode(Vehicle.U);
+                    CalcThw = NO_THREAT;
+                }
+                else
+                {
+                    // If the vehicle is in range, adjust the ACC mode
+                    if ((VehOther[VEH_FRONT].Distance < Params.Range) && (VehOther[VEH_FRONT].Distance > 0))
+                    {
+                        if ((Events.Vehicles[VehOther[VEH_FRONT].VehicleIndex].Speed < VehTargetSpeed) &&
+                            (Vehicle.U > 0))
+                        {
+                            // Determine which mode we should be in
+                            CalcThw = (VehOther[VEH_FRONT].Distance) / Vehicle.U;
+                            if (CalcThw < (1.15 * Thw))
+                            {
+                                ACCMode = ACCMODE_FOLLOWING;
+                            }
+                            else if (!(Math.Abs(VehTargetSpeed - Vehicle.U) > DELTASPEED))
+                            {
+                                ACCMode = ACCMODE_CRUISE;
+                            }
+                            else
+                            {
+                                ACCMode = ACCMODE_ADAPTING;
+                            }
+                        }
+                        else
+                        {
+                            SetACCMode(Vehicle.U);
+                        }
+                    }
+                    else
+                    {
+                        SetACCMode(Vehicle.U);
+                    }
+                }
+                
+                // If we are in autonomous mode, handle the speed commands
+                if (ControlMode >= AUTONOMOUS_ACC)
+                {
+                    // Determine controller actions and assign tasks to
+                    // controllers based on the automation mode set by the driver
+                    switch (ACCMode)
+                    {
+                        // Use the driver's inputs
+                        case ACCMODE_OFF :
+                            Driver.ThrottleOut = Driver.ThrottleIn;
+                            Driver.BrakeOut = Driver.BrakeIn;
+                            break;
+                        
+                        // Set the commanded speed to basic cruise control
+                        case ACCMODE_CRUISE :
+                            SpeedCommand = Cruise.Control(VehTargetSpeed, Vehicle.U, DV.TimeInc);
+                            break;
+                        
+                        // There is a vehicle in front that the system needs to follow
+                        case ACCMODE_FOLLOWING :
+                            if (VehOther[VEH_FRONT].Distance > 0)
+                            {
+                                if (VehOther[VEH_FRONT].VehicleIndex > -1)
+                                {
+                                    TempTime = 100 * (VehOther[VEH_FRONT].Distance / Vehicle.U);
+                                    TempSng = 100 * Thw;
+                                    SpeedCommand = Follow.Control(TempTime, TempSng, DV.TimeInc);
+                                }
+                            }
+
+                            break;
+                        
+                        // Set the system to adapt to the desired speed
+                        case ACCMODE_ADAPTING :
+                            if (!Trajectory.Interpolating)
+                            {
+                                Trajectory.PlanTrajectory(Vehicle.U, VehTargetSpeed, SimFrameCount, 4.5f, DV.TimeInc);
+                            }
+                            
+                            TempSng = Trajectory.UpdateTrajectory(SimFrameCount);
+                            SpeedCommand = Cruise.Control(TempSng, Vehicle.U, DV.TimeInc);
+                            break;
+                    }
+                    // Based on the commanded speed, make changes to the pedal inputs
+                    if (SpeedCommand > 0)
+                    {
+                        Driver.ThrottleOut = SpeedCommand * ThrottleSF;
+                        Driver.BrakeOut = 0;
+                    }
+                    else if (SpeedCommand < 0)
+                    {
+                        Driver.ThrottleOut = 0;
+                        Driver.BrakeOut = SpeedCommand * BrakeSF;
+                    }
+                }
+                
+                // If we are in full autonomous mode, then handle lane changes
+                if (ControlMode == AUTONOMOUS_FULL)
+                {
+                    
+                    // Determine which lane we should be in
+                    if ((LaneTarget >= - NumLanesL) && (LaneTarget <= NumLanesR))
+                    {
+                        Lane = Math.Abs(LaneTarget);
+                    }
+                    else if (LaneTarget > NumLanesR)
+                    {
+                        Lane = NumLanesR;
+                        LaneTarget = Lane;
+                    }
+                    else
+                    {
+                        Lane = NumLanesL;
+                        LaneTarget = -Lane;
+                    }
+                    
+                    // Delay the start of the lane change
+                    if (DV.TimeSinceStart < (StartDelay + Params.LaneChangeDelay))
+                    {
+                        LanePosition = (InitLane - 0.5f) * LaneWidth + HalfMedian;
+                    }
+                    else
+                    {
+                        LanePosition = (Lane - 0.5f) * LaneWidth + HalfMedian;
+                    }
+                    
+                    // If it is driving on the left change the sign of the offset
+                    if (Convert.ToBoolean(DriveOnLeft))
+                    {
+                        LanePosition = -LanePosition;
+                    }
+                    
+                    // Handle the turn signals
+                    if (Convert.ToBoolean(SignalActive))
+                    {
+                        // If the vehicle has obtained its new position, then switch the turn signal off
+                        if (DV.TimeSinceStart > (StartDelay + Params.LaneChangeDelay))
+                        {
+                            if (Math.Abs(LanePosition - Vehicle.YLanePos) < TURNSIG_OFF_THRESHOLD)
+                            {
+                                SignalActive = TURNSIG_NONE;
+                            }
+                        }
+                    }
+                    
+                    // Compute the steering input
+                    LateralPos.KProportional =
+                        Params.LanePID.Proportional + 
+                        Convert.ToSingle(0.065 * (Math.Pow((FEETPERSECTOMPH * Vehicle.U), 1.7)));
+                    Driver.SteerOut = SteeringSF * LateralPos.Control(LanePosition, Vehicle.YLanePos, DV.TimeInc);
+                    
+                    // Limit our steering input
+                    if (Driver.SteerOut > Params.SteeringLimit)
+                    {
+                        Driver.SteerOut = Params.SteeringLimit;
+                    }
+                    else if (Driver.SteerOut < -Params.SteeringLimit)
+                    {
+                        Driver.SteerOut = -Params.SteeringLimit;
+                    }
+                }
+                
+                // Update the operators user interface
+                DV.DisplayStrings[1] = ControlMode switch
+                {
+                    AUTONOMOUS_MANUAL => "Manual",
+                    AUTONOMOUS_ACC => "ACC",
+                    AUTONOMOUS_FULL => "HAD",
+                    _ => DV.DisplayStrings[1]
+                };
+                DV.DisplayStrings[2] = ACCMode.ToString();
+
                 DynVars = (OMDynamicVariables) CloneStructure(DV);
 
                 return true;
@@ -1284,6 +1741,20 @@ namespace OM_Automated_Driving
             controller.KDerivative = Values.Derivative;
             controller.KIntegral = Values.Integral;
             controller.KProportional = Values.Proportional;
+        }
+
+        private void SetOtherVehicle(ref DetectedVehicle VehObj, int EventIndex, float Distance)
+        {
+            if (Math.Abs(Distance) < Math.Abs(VehObj.Distance))
+            {
+                VehObj.Distance = Distance;
+                VehObj.VehicleIndex = EventIndex;
+            }
+        }
+
+        private void SetACCMode(float Speed)
+        {
+            ACCMode = Math.Abs(VehTargetSpeed - Speed) > DELTASPEED ? ACCMODE_ADAPTING : ACCMODE_CRUISE;
         }
     }
 }
