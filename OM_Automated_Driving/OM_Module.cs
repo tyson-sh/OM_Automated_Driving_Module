@@ -756,12 +756,11 @@ namespace OM_Automated_Driving
                     graphics.AddGLPrimitive(ref NumVerts, ref XPoly, ref YPoly, ref ZPoly, ref UT, ref VT,
                         ref ID_Screen, ref ModelIndex);
                     lng = graphics.EndModelDefinition(ID_Screen, ModelIndex);
-                    tools.WriteToTJRFile(ref OM_LogFileHandle, "lng = " + lng.ToString());
 
                     // Set the background Position on the screen
-                    LaneKeepingDisplay.SixDOF.Y = StaticVars.SimWindow.OffsetX + Params.Image_Left * StaticVars.SimWindow.Width;
-                    LaneKeepingDisplay.SixDOF.Z = StaticVars.SimWindow.OffsetY -
-                                          (Params.Image_Top - Params.Image_Size) * StaticVars.SimWindow.Height;
+                    LaneKeepingDisplay.SixDOF.Y = (StaticVars.SimWindow.OffsetX) + Params.Image_Left * StaticVars.SimWindow.Width;
+                    LaneKeepingDisplay.SixDOF.Z = StaticVars.SimWindow.OffsetY - 
+                                                  (Params.Image_Top - Params.Image_Size) * StaticVars.SimWindow.Height;
                     LaneKeepingDisplay.Handle = graphics.LoadGraphicObject(LaneKeepingDisplay.SixDOF, ID_Screen, null,
                         LaneKeepingDisplay.Description, STAGE_ORTHAGONAL);
                     graphics.SetObjectPosition(LaneKeepingDisplay.Handle, LaneKeepingDisplay.SixDOF);
@@ -1105,7 +1104,7 @@ namespace OM_Automated_Driving
                                         Params.Image_Top = Convert.ToSingle(ParamVal);
                                         break;
 
-                                    case "Image LEFT":
+                                    case "IMAGE LEFT":
                                         Params.Image_Left = Convert.ToSingle(ParamVal);
                                         break;
                                 }
@@ -1709,8 +1708,8 @@ namespace OM_Automated_Driving
 
         private void TurnDisplayOff()
         {
-            graphics.SetObjectVisibility((int) ACCDisplay.Handle, GRAPHICS_IMAGE_OFF);
-            graphics.SetObjectVisibility((int) LaneKeepingDisplay.Handle, GRAPHICS_IMAGE_OFF);
+            graphics.SetObjectVisibility(ACCDisplay.Handle, GRAPHICS_IMAGE_OFF);
+            graphics.SetObjectVisibility(LaneKeepingDisplay.Handle, GRAPHICS_IMAGE_OFF);
             SignalActive = TURNSIG_NONE;
         }
 
