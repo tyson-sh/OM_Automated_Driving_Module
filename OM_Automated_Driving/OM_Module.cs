@@ -692,30 +692,29 @@ namespace OM_Automated_Driving
                 Thw = Params.Headway[ThwCycle];
 
                 // Add a couple of display images to the dashboard overlay form
-                // TODO: Should there be weird graphics bugs... Try increasing all following array indexes by one
                 NumVerts = 4;
-                XPoly[0] = 0;
                 XPoly[1] = 0;
                 XPoly[2] = 0;
                 XPoly[3] = 0;
-                YPoly[0] = 0;
-                ZPoly[0] = 0;
-                YPoly[1] = YPoly[0]; // WTF
-                ZPoly[1] = Params.Image_Size * StaticVars.SimWindow.Height;
-                YPoly[2] = Params.Image_Size * StaticVars.SimWindow.Width;
-                ZPoly[2] = ZPoly[1];
-                YPoly[3] = YPoly[2];
-                ZPoly[3] = ZPoly[0];
+                XPoly[4] = 0;
+                YPoly[1] = 0;
+                ZPoly[1] = 0;
+                YPoly[2] = YPoly[1];
+                ZPoly[2] = Params.Image_Size * StaticVars.SimWindow.Height;
+                YPoly[3] = Params.Image_Size * StaticVars.SimWindow.Width;
+                ZPoly[3] = ZPoly[2];
+                YPoly[4] = YPoly[3];
+                ZPoly[4] = ZPoly[1];
 
                 // Setup our texture coordinates
-                UT[0] = 0;
-                VT[0] = 0;
-                UT[1] = UT[0];
-                VT[1] = 1;
-                UT[2] = 1;
-                VT[2] = VT[1];
-                UT[3] = UT[2];
-                VT[3] = VT[0];
+                UT[1] = 0;
+                VT[1] = 0;
+                UT[2] = UT[0];
+                VT[2] = 1;
+                UT[3] = 1;
+                VT[3] = VT[2];
+                UT[4] = UT[3];
+                VT[4] = VT[1];
 
                 // Define the polygon color
                 PolyColor.Red = 1;
@@ -757,15 +756,16 @@ namespace OM_Automated_Driving
                     graphics.AddGLPrimitive(ref NumVerts, ref XPoly, ref YPoly, ref ZPoly, ref UT, ref VT,
                         ref ID_Screen, ref ModelIndex);
                     lng = graphics.EndModelDefinition(ID_Screen, ModelIndex);
+                    tools.WriteToTJRFile(ref OM_LogFileHandle, "lng = " + lng.ToString());
 
                     // Set the background Position on the screen
-                    ACCDisplay.SixDOF.Y = StaticVars.SimWindow.OffsetX + Params.Image_Left * StaticVars.SimWindow.Width;
-                    ACCDisplay.SixDOF.Z = StaticVars.SimWindow.OffsetY -
+                    LaneKeepingDisplay.SixDOF.Y = StaticVars.SimWindow.OffsetX + Params.Image_Left * StaticVars.SimWindow.Width;
+                    LaneKeepingDisplay.SixDOF.Z = StaticVars.SimWindow.OffsetY -
                                           (Params.Image_Top - Params.Image_Size) * StaticVars.SimWindow.Height;
-                    ACCDisplay.Handle = graphics.LoadGraphicObject(ACCDisplay.SixDOF, ID_Screen, null,
-                        ACCDisplay.Description, STAGE_ORTHAGONAL);
-                    graphics.SetObjectPosition(ACCDisplay.Handle, ACCDisplay.SixDOF);
-                    graphics.SetObjectVisibility(ACCDisplay.Handle, GRAPHICS_IMAGE_OFF);
+                    LaneKeepingDisplay.Handle = graphics.LoadGraphicObject(LaneKeepingDisplay.SixDOF, ID_Screen, null,
+                        LaneKeepingDisplay.Description, STAGE_ORTHAGONAL);
+                    graphics.SetObjectPosition(LaneKeepingDisplay.Handle, LaneKeepingDisplay.SixDOF);
+                    graphics.SetObjectVisibility(LaneKeepingDisplay.Handle, GRAPHICS_IMAGE_OFF);
                 }
 
                 return true;
@@ -1233,7 +1233,7 @@ namespace OM_Automated_Driving
                 float TempSng;
                 float TempTime;
                 long VehIndex;
-                DetectedVehicle[] VehOther = new DetectedVehicle[VEH_RIGHTREAR];
+                DetectedVehicle[] VehOther = new DetectedVehicle[VEH_RIGHTREAR + 1];
 
                 // Only allow the autonomous modes if the vehicle is moving
                 if (Vehicle.U == 0)
@@ -1450,9 +1450,6 @@ namespace OM_Automated_Driving
                                 if (ControlMode == AUTONOMOUS_FULL)
                                 {
                                     tools.WriteToTJRFile(ref OM_LogFileHandle, "Turning off");
-                                    tools.WriteToTJRFile(ref OM_LogFileHandle, "2");
-                                    tools.WriteToTJRFile(ref OM_LogFileHandle,
-                                        "************************************************");
                                     ControlMode = AUTONOMOUS_MANUAL;
                                     TurnDisplayOff();
                                 }
@@ -1472,8 +1469,8 @@ namespace OM_Automated_Driving
                                         InitLane = NumLanesL - 1;
                                     }
 
-                                    graphics.SetObjectVisibility(ACCDisplay.Handle, GRAPHICS_IMAGE_ON);
-                                    graphics.SetObjectVisibility(LaneKeepingDisplay.Handle, GRAPHICS_IMAGE_OFF);
+                                    graphics.SetObjectVisibility(ref ACCDisplay.Handle, GRAPHICS_IMAGE_ON);
+                                    graphics.SetObjectVisibility(ref LaneKeepingDisplay.Handle, GRAPHICS_IMAGE_ON);
                                 }
 
                                 // Cancel all automation modes (Why is this here?)
