@@ -35,44 +35,33 @@ namespace OM_Automated_Driving
     [ComVisible(true)]
     public interface IOM_Module
     {
-        [DispId(1)]
-        string BSAVData { get; }
-        
-        [DispId(2)]
-        object DashboardForm { set; }
+        [DispId(1)] string BSAVData { get; }
 
-        [DispId(3)]
-        string ErrorMessage { get; }
-        
-        [DispId(4)]
-        SimEvents EventsIn { set; }
+        [DispId(2)] object DashboardForm { set; }
 
-        [DispId(5)]
-        SimEvents EventsOut { get; }
-    
-        [DispId(6)]
-        int LogFileHandle { set; }
-        
-        [DispId(7)]
-        object NewForm { set;  }
-        
-        [DispId(8)]
-        short SaveControls { get; }
-        
-        [DispId(9)]
-        object StartForm { set; }
-        
-        [DispId(10)]
-        string TextMessage { get; }
-        
-        [DispId(11)]
-        int WillHandleCrash { get; }
+        [DispId(3)] string ErrorMessage { get; }
+
+        [DispId(4)] SimEvents EventsIn { set; }
+
+        [DispId(5)] SimEvents EventsOut { get; }
+
+        [DispId(6)] int LogFileHandle { set; }
+
+        [DispId(7)] object NewForm { set; }
+
+        [DispId(8)] short SaveControls { get; }
+
+        [DispId(9)] object StartForm { set; }
+
+        [DispId(10)] string TextMessage { get; }
+
+        [DispId(11)] int WillHandleCrash { get; }
 
         [DispId(12)]
         bool AddNew(OMParameters OMVars);
 
         [DispId(13)]
-        bool ControlInputs(DYNAMICSParams Dyn, ref float Steering, ref float Throttle, ref float Brake, 
+        bool ControlInputs(DYNAMICSParams Dyn, ref float Steering, ref float Throttle, ref float Brake,
             ref float Clutch, ref short Gear, ref int DInput);
 
         [DispId(14)]
@@ -95,21 +84,20 @@ namespace OM_Automated_Driving
 
         [DispId(20)]
         bool StartUp(ref GAINSParams Config, object BackForm, ref OMStaticVariables SV, ref bool UseNew,
-             float[] PlaybackData, string PlaybackString, string ParamFile, TJRSoundEffects SoundIn);
+            float[] PlaybackData, string PlaybackString, string ParamFile, TJRSoundEffects SoundIn);
 
         [DispId(21)]
         bool Update(ref OMDynamicVariables DV, DYNAMICSParams Vehicle, short NumEvents, ref float[] EDist,
             short[] EDes, short[] EIndex);
-
     }
-    
+
     [Guid("e802851c-de8c-4b30-afec-eecd6c87bbec"),
      InterfaceType(ComInterfaceType.InterfaceIsIDispatch)]
     public interface OMCOM_Events
     {
         // Left empty intentionally
     }
-    
+
     ///
     /// <summary>
     /// <para>
@@ -123,8 +111,8 @@ namespace OM_Automated_Driving
     /// </para>
     /// </summary>
     /// 
-    [Guid("b18abdab-01d8-4b10-b3f9-24d558a22ee9"), 
-     ClassInterface(ClassInterfaceType.None), 
+    [Guid("b18abdab-01d8-4b10-b3f9-24d558a22ee9"),
+     ClassInterface(ClassInterfaceType.None),
      ComSourceInterfaces(typeof(OMCOM_Events))
     ]
     [ComVisible(true)]
@@ -132,13 +120,12 @@ namespace OM_Automated_Driving
     [Serializable]
     public class OM_Module : IOM_Module
     {
-        
         // Setup references to the STISIM Drive COM objects
         TJR3DGraphics graphics = new TJR3DGraphics();
         TJRSoundEffects sound = new TJRSoundEffects();
         STI_3D_Terrain terrain = new STI_3D_Terrain();
         TJRWinToolsCls tools = new TJRWinToolsCls();
-        
+
         // Setup constant properties
         private const long ACCMODE_OFF = 0;
         private const long ACCMODE_CRUISE = 1;
@@ -159,17 +146,17 @@ namespace OM_Automated_Driving
         private const long TURNSIG_LEFT = 1;
         private const long TURNSIG_RIGHT = 2;
         private const float TURNSIG_OFF_THRESHOLD = 1f;
-        
+
         // TODO Remove
         private int DisplayTemp;
-        
+
         // Define constants for the vehicles around the driven vehicle
         private const long VEH_FRONT = 0;
         private const long VEH_LEFTFRONT = 1;
         private const long VEH_RIGHTFRONT = 2;
         private const long VEH_LEFTREAR = 3;
         private const long VEH_RIGHTREAR = 4;
-        
+
         // Define constants for the vehicles around the driven vehicle
         private const long BUTTON_CYCLEHEADWAYTIME = 0;
         private const long BUTTON_DECREASESPEED = 1;
@@ -183,7 +170,7 @@ namespace OM_Automated_Driving
         // Define constants for the worlds used by the graphics object
         static int WORLD_ROADWAY = Convert.ToInt32(SimConstants.WORLD_ROADWAY);
         static int WORLD_SCREEN = Convert.ToInt32(SimConstants.WORLD_ORTHOGRAPHIC);
-        
+
         // Assign STISIM Drive simulator constants to local constant names
         private const int CONTROLLER_GAME = (int) ControllerConstants.CONTROLLER_GAME;
         private const int CONTROLLER_STI_ADS_II = (int) ControllerConstants.CONTROLLER_STI_ADS_II;
@@ -209,7 +196,7 @@ namespace OM_Automated_Driving
         private object OM_StartForm;
         private string OM_TextMessage;
         private int OM_WillHandleCrash;
-        
+
         // Declare static variables to be used in Update() function
         // These were originally declared in the function but C# does not support
         // method level static variables
@@ -217,43 +204,44 @@ namespace OM_Automated_Driving
         private static bool FirstPass = true;
         private static float InitLane;
         private static float StartDelay;
-        
+
         // Create a type for the driver input information
         // TODO: Refactor into own file/class
         private struct DriverControlInputs
         {
             // Original braking input from the driver
             public float BrakeIn;
-            
+
             // Braking input that will be used
             public float BrakeOut;
 
             // Current state of the driver's input buttons
             public long Buttons;
-            
+
             // Save the current values of the buttons
             public long ButtonsPrev;
-            
+
             // Clutch control count from the controller card
             public float Clutch;
-            
+
             // Current transmission gear 
             public short Gear;
-            
+
             // Original steering angle input from the driver
             public float SteerIn;
-            
+
             // Steering input that will be used
             public float SteerOut;
 
             // Original throttle control input from the driver
             public float ThrottleIn;
-            
+
             // Gas pedal input that will be used
             public float ThrottleOut;
         }
+
         private DriverControlInputs Driver = new DriverControlInputs();
-        
+
         // Create a type and variable
         // TODO: Refactor into own file/class
         private struct PIDValues
@@ -262,7 +250,7 @@ namespace OM_Automated_Driving
             public float Integral;
             public float Proportional;
         }
-        
+
         // TODO: Refactor into own file/class
         private struct InputParams
         {
@@ -284,9 +272,9 @@ namespace OM_Automated_Driving
             public float SteeringLimit;
             public float ThrottleGain;
         }
-        
+
         InputParams Params = new InputParams();
-        
+
         // Create a type for holding other vehicle information
         // TODO: Refactor into own file/class
         private struct DetectedVehicle
@@ -294,7 +282,7 @@ namespace OM_Automated_Driving
             public float Distance;
             public long VehicleIndex;
         }
-        
+
         // Create a type for holding information for the screen objects
         // TODO: Refactor into own file/class
         private struct ScreenObjects
@@ -305,10 +293,10 @@ namespace OM_Automated_Driving
             public SixDOFPosition SixDOF;
             public long VisIndex;
         }
-        
+
         ScreenObjects ACCDisplay = new ScreenObjects();
         ScreenObjects LaneKeepingDisplay = new ScreenObjects();
-        
+
         // Define variables that will be global to this class and hold OM information
         private long BrakeTravel;
         private long ButtonPressed;
@@ -317,28 +305,28 @@ namespace OM_Automated_Driving
         private long ThrottleTravel;
 
         // Define all variables that will be global to this class
-        
+
         // User defined type containing STISIM Drive variables that change as the run progresses
-        private OMDynamicVariables DynVars = new OMDynamicVariables {};
-        
+        private OMDynamicVariables DynVars = new OMDynamicVariables { };
+
         // Type for holding the configuration parameters
-        private GAINSParams Gains = new GAINSParams {};
-        
+        private GAINSParams Gains = new GAINSParams { };
+
         // Graphics ID for the screen world
         private int ID_Screen;
-        
+
         // Graphics ID for the world view
         private int ID_World;
-        
+
         // User defined type containing STISIM drive variables that are fixed by the simulator
-        private OMStaticVariables StaticVars = new OMStaticVariables {};
-        
+        private OMStaticVariables StaticVars = new OMStaticVariables { };
+
         // Define some autonomous objects
         private Controller Cruise = new Controller();
         private Controller Follow = new Controller();
         private Controller LateralPos = new Controller();
         private Bezier Trajectory = new Bezier();
-        
+
         // Define variables that will be global to this class and hold OM information
         private long ACCMode; // Change from int to long (no implicit conversion in c#)
         private long ControlMode; // Change from int to long (no implicit conversion in c#)
@@ -352,19 +340,19 @@ namespace OM_Automated_Driving
         private int ThwCycle;
         private float VehCurSpeed;
         private float VehTargetSpeed;
-        
+
         // Scaling for controller values
         private float BrakeSF;
         private float SteeringSF;
         private float ThrottleSF;
-        
+
         /// <summary>
         ///     Zero parameter constructor included to satisfy COM registration requirements
         /// </summary>
         public OM_Module()
         {
         }
-    
+
         // Public properties for interfacing with STISIM internal variables
         public string BSAVData
         {
@@ -380,7 +368,7 @@ namespace OM_Automated_Driving
         {
             get { return OM_ErrorMessage; }
         }
-        
+
         // NOTE: not deep clone, potential source of error
         public SimEvents EventsIn
         {
@@ -399,7 +387,7 @@ namespace OM_Automated_Driving
 
         public object NewForm
         {
-            set { OM_NewForm = value;  }
+            set { OM_NewForm = value; }
         }
 
         public short SaveControls
@@ -421,10 +409,10 @@ namespace OM_Automated_Driving
         {
             get { return OM_WillHandleCrash; }
         }
-        
+
         // Public functions for defining OM behaviour
-        
-        
+
+
         /// <summary>
         ///     Function for adding a new interactive Open Module event.
         /// </summary>
@@ -447,9 +435,8 @@ namespace OM_Automated_Driving
                 OM_ErrorMessage = "AddNew" + e.Message;
                 return false;
             }
-            
         }
-        
+
         ///
         /// <summary>
         ///     Function for handling any user defined control inputs.
@@ -474,17 +461,17 @@ namespace OM_Automated_Driving
                 DisplayTemp = Buttons;
                 // Instantiate all variables local to this routine
                 long TurnSigState = 0; // If buggy move to class level static field
-                
+
                 // Save the current button state
                 Driver.ButtonsPrev = Driver.Buttons;
-                
+
                 // Make the driver inputs available to the other methods
                 Driver.BrakeIn = Brake;
                 Driver.ThrottleIn = Throttle;
                 Driver.SteerIn = Steering;
                 Driver.Gear = Gear;
                 Driver.Buttons = Buttons;
-                
+
                 // If the driver applies the gas or brake pedal, turn the system off
                 if ((Brake > 0.025 * BrakeTravel) || (Throttle > 0.025 * ThrottleTravel))
                 {
@@ -492,7 +479,7 @@ namespace OM_Automated_Driving
                     ControlMode = AUTONOMOUS_MANUAL;
                     TurnDisplayOff();
                 }
-                
+
                 // Depending on which driving mode we are in, set the driver inputs that will be passed back
                 // TODO: Seriously rethink the structure of this nested switch statement
 
@@ -505,30 +492,30 @@ namespace OM_Automated_Driving
                         Brake = Driver.BrakeIn;
                         SignalActive = TURNSIG_NONE;
                         break;
-                    
+
                     // Lateral automation mode
                     case AUTONOMOUS_ACC:
-                        
+
                         switch (ACCMode)
                         {
                             case ACCMODE_OFF:
                                 Throttle = Driver.ThrottleIn;
                                 Brake = Driver.BrakeIn;
                                 break;
-                            
+
                             case ACCMODE_CRUISE:
                                 Throttle = Driver.ThrottleOut;
                                 Brake = Driver.BrakeIn;
                                 break;
-                            
+
                             case ACCMODE_FOLLOWING:
                                 Throttle = Driver.ThrottleOut;
                                 Brake = Driver.BrakeOut;
                                 break;
-
                         }
+
                         break;
-                    
+
                     // Longitudinal automation mode
                     case AUTONOMOUS_FULL:
                         Steering = Driver.SteerOut;
@@ -536,7 +523,7 @@ namespace OM_Automated_Driving
                         Brake = Driver.BrakeOut;
                         break;
                 }
-                
+
                 // Limit our inputs
                 if (ControlMode != AUTONOMOUS_MANUAL)
                 {
@@ -560,7 +547,7 @@ namespace OM_Automated_Driving
                         Brake = BrakeTravel;
                     }
                 }
-                
+
                 // Handle the turn signals if an auto lane change has been commanded
                 // NOTE: What happens if zero?
                 if (SignalToggle != 0) // Potentially buggy
@@ -569,7 +556,7 @@ namespace OM_Automated_Driving
                     {
                         // Beware Overflow
                         Buttons = Convert.ToInt32(ProcessSignal(SignalActive, Buttons));
-                    } 
+                    }
                     else
                     {
                         // Beware Overflow
@@ -582,7 +569,7 @@ namespace OM_Automated_Driving
                 }
 
                 TurnSigState = SignalActive;
-                
+
                 Gear = 0;
                 return true;
             }
@@ -591,7 +578,6 @@ namespace OM_Automated_Driving
                 OM_ErrorMessage = "ControlInputs" + e.Message;
                 return false;
             }
-            
         }
 
         ///
@@ -615,9 +601,8 @@ namespace OM_Automated_Driving
                 OM_ErrorMessage = "Dynamic " + e.Message;
                 return false;
             }
-            
         }
-        
+
         ///
         /// <summary>
         ///     Function for handling all Open Module action in the event of a driver crash during the simulation run.
@@ -646,9 +631,8 @@ namespace OM_Automated_Driving
                 OM_ErrorMessage = "handle crash " + e.Message;
                 return false;
             }
-            
         }
-        
+
         ///
         /// <summary>
         ///     Function for handling all Open Module initialization.
@@ -664,7 +648,7 @@ namespace OM_Automated_Driving
         ///     method will return false.
         /// </returns>
         /// 
-        public bool Initialize(ref OMStaticVariables SV, int[] WorldIndex, TJR3DGraphics GraphicsIn, 
+        public bool Initialize(ref OMStaticVariables SV, int[] WorldIndex, TJR3DGraphics GraphicsIn,
             STI_3D_Terrain TerrainIn)
         {
             try
@@ -679,8 +663,8 @@ namespace OM_Automated_Driving
                 float[] XPoly = new float[5];
                 float[] YPoly = new float[5];
                 float[] ZPoly = new float[5];
-                
-                
+
+
                 // Get the handles to the simulator's 3D roadway world and 2D screen world
                 ID_World = WorldIndex[WORLD_ROADWAY];
                 ID_Screen = WorldIndex[WORLD_SCREEN];
@@ -690,23 +674,23 @@ namespace OM_Automated_Driving
                 terrain = TerrainIn;
 
                 // Make the static variables available to all other methods
-                StaticVars =  (OMStaticVariables)CloneStructure(SV);
-                
+                StaticVars = (OMStaticVariables) CloneStructure(SV);
+
                 // Setup our autonomous vehicle classes
                 SetupPIDController(ref Cruise, ref Params.CruisePID);
                 SetupPIDController(ref Follow, ref Params.FollowPID);
                 SetupPIDController(ref LateralPos, ref Params.LanePID);
-                
+
                 // Set some initial values
                 ControlMode = AUTONOMOUS_MANUAL;
                 LaneControlActive = false;
                 VehTargetSpeed = 60;
                 SignalActive = TURNSIG_NONE;
-                
+
                 // Set the initial headway settings
                 ThwCycle = 2;
                 Thw = Params.Headway[ThwCycle];
-                
+
                 // Add a couple of display images to the dashboard overlay form
                 // TODO: Should there be weird graphics bugs... Try increasing all following array indexes by one
                 NumVerts = 4;
@@ -722,7 +706,7 @@ namespace OM_Automated_Driving
                 ZPoly[2] = ZPoly[1];
                 YPoly[3] = YPoly[2];
                 ZPoly[3] = ZPoly[0];
-                
+
                 // Setup our texture coordinates
                 UT[0] = 0;
                 VT[0] = 0;
@@ -732,26 +716,26 @@ namespace OM_Automated_Driving
                 VT[2] = VT[1];
                 UT[3] = UT[2];
                 VT[3] = VT[0];
-                
+
                 // Define the polygon color
                 PolyColor.Red = 1;
                 PolyColor.Green = 1;
                 PolyColor.Blue = 1;
                 PolyColor.Alpha = 1;
-                
+
                 // Create the ACC image
                 if (tools.FileExist(Params.Image_ACC))
                 {
                     // Start the model definition
                     ACCDisplay.Description = "OM_ACC_Display";
-                    ModelIndex = GraphicsIn.StartModelDefinition(ref ACCDisplay.Description, 
+                    ModelIndex = GraphicsIn.StartModelDefinition(ref ACCDisplay.Description,
                         ref ID_Screen, Convert.ToInt32(NumVerts));
-                    
+
                     // Pass the information to the graphics renderer
                     lng = graphics.SetMaterial(Params.Image_ACC, PolyColor, TEXTURE_CLAMP, null, null, null);
                     graphics.AddGLPrimitive(NumVerts, XPoly, YPoly, ZPoly, UT, VT, ID_Screen, ModelIndex);
                     lng = graphics.EndModelDefinition(ID_Screen, ModelIndex);
-                    
+
                     // Set the background position on the screen
                     ACCDisplay.SixDOF.Y = StaticVars.SimWindow.OffsetX + Params.Image_Left * StaticVars.SimWindow.Width;
                     ACCDisplay.SixDOF.Z = StaticVars.SimWindow.OffsetY + Params.Image_Top * StaticVars.SimWindow.Height;
@@ -760,18 +744,18 @@ namespace OM_Automated_Driving
                     graphics.SetObjectPosition(ACCDisplay.Handle, ACCDisplay.SixDOF);
                     graphics.SetObjectVisibility(ACCDisplay.Handle, GRAPHICS_IMAGE_OFF);
                 }
-                
+
                 // Create the HAD image
                 if (tools.FileExist(Params.Image_HAD))
                 {
-
                     // Start the model definition
                     LaneKeepingDisplay.Description = "OM_HAD_Display";
                     ModelIndex = graphics.StartModelDefinition(LaneKeepingDisplay.Description, ID_Screen, NumVerts);
 
                     // Pass the information to the graphics renderer
                     lng = graphics.SetMaterial(Params.Image_HAD, PolyColor, TEXTURE_CLAMP, null, null, null);
-                    graphics.AddGLPrimitive(ref NumVerts, ref XPoly, ref YPoly, ref ZPoly, ref UT, ref VT, ref ID_Screen, ref ModelIndex);
+                    graphics.AddGLPrimitive(ref NumVerts, ref XPoly, ref YPoly, ref ZPoly, ref UT, ref VT,
+                        ref ID_Screen, ref ModelIndex);
                     lng = graphics.EndModelDefinition(ID_Screen, ModelIndex);
 
                     // Set the background Position on the screen
@@ -788,15 +772,14 @@ namespace OM_Automated_Driving
             }
             catch (Exception e)
             {
-                OM_ErrorMessage = "Initialize Module threw an exception " + Environment.NewLine + 
-                                  "Message: " + e.Message + Environment.NewLine + 
+                OM_ErrorMessage = "Initialize Module threw an exception " + Environment.NewLine +
+                                  "Message: " + e.Message + Environment.NewLine +
                                   "Source: " + e.Source +
                                   "Data " + e.Data + Environment.NewLine + "Stack trace: " + e.StackTrace;
-                return false; 
+                return false;
             }
-            
         }
-        
+
         ///
         /// <summary>
         ///     Function for handling anything before the software exits.
@@ -826,7 +809,7 @@ namespace OM_Automated_Driving
                 return false;
             }
         }
-        
+
         ///
         /// <summary>
         ///     Function for specifying any OM data that will be stored as part of a playback file.
@@ -850,7 +833,7 @@ namespace OM_Automated_Driving
                 return false;
             }
         }
-        
+
         /// <summary>
         ///     Function for handling Open Module processes immediately after a simulation run has ended.
         /// </summary>
@@ -880,7 +863,7 @@ namespace OM_Automated_Driving
                 return false;
             }
         }
-        
+
         ///
         /// <summary>
         ///     Function for handling Open Module processes immediately after the software is started.
@@ -909,7 +892,6 @@ namespace OM_Automated_Driving
         {
             try
             {
-                
                 // Dimension all variables local to this routine
                 int ErrorType;
                 int FileNum;
@@ -918,10 +900,10 @@ namespace OM_Automated_Driving
                 int J;
                 string ParamName;
                 string ParamVal;
-                
+
                 // Assign a reference to the local sound object so that it can be used in other modules
                 sound = SoundIn;
-                
+
                 // Make sure we have a set of controls and that the system is not set for autopilot.
                 // If it is, throw error and abort simulation run
                 if ((Config.IControlFlag < CONTROLLER_GAME) || (Config.IControlFlag > CONTROLLER_STI_ADS_II))
@@ -929,13 +911,13 @@ namespace OM_Automated_Driving
                     ErrorType = 1;
                     throw new InvalidOperationException("An error occured");
                 }
-                
+
                 // TODO: Potential bug... Test this later
                 if (Convert.ToBoolean(Config.IAutoPilot))
                 {
                     throw new InvalidOperationException("System is in autopilot mode");
                 }
-                
+
                 // Setup any labels that will be used to display data in the STISIM Drive runtime window display
 
                 if (SV.DisplaySystem.Equals("CenterDisplay"))
@@ -943,10 +925,11 @@ namespace OM_Automated_Driving
                     SV.DisplayStrings[1] = "Autonomous Mode";
                     SV.DisplayStrings[2] = "ACC Mode";
                 }
-                
+
                 // Set some default values in case data is not provided in the INI file
                 Array.Resize(ref Params.Headway, 3); // Potentially mistranslated
-                Array.Resize(ref Params.Buttons, Convert.ToInt32(BUTTON_RIGHTLANECHANGE + 1)); // Potentially mistranslated
+                Array.Resize(ref Params.Buttons,
+                    Convert.ToInt32(BUTTON_RIGHTLANECHANGE + 1)); // Potentially mistranslated
 
                 Params.CruisePID.Derivative = 100;
                 Params.CruisePID.Integral = 2000;
@@ -955,7 +938,7 @@ namespace OM_Automated_Driving
                 Params.FollowPID.Derivative = 5;
                 Params.FollowPID.Integral = 20;
                 Params.FollowPID.Proportional = 3000;
-                
+
                 // Sticking to the source... But I think that this Section should be LanePID
                 Params.FollowPID.Derivative = 400;
                 Params.FollowPID.Integral = 150;
@@ -967,7 +950,7 @@ namespace OM_Automated_Driving
                 Params.Range = 328;
 
                 tools.WriteToTJRFile(ref OM_LogFileHandle, "Just a test");
-                
+
                 // If there is an initialization file specified, perform the initializing
                 //
                 // NOTE: During the initial rewrite of this if statement I have deviated pretty far from the
@@ -985,157 +968,157 @@ namespace OM_Automated_Driving
 
                             // Check to make sure line is not blank
                             if (FileParam.Length <= 0 || FileParam.Equals("")) continue;
-                            
+
                             // 1:1 conversion, not sure what tools.Extract does
                             FileParam = tools.Extract(ref FileParam, "%", 1);
-                            
+
                             // Last check to ensure line is not null
                             if (FileParam == null) continue;
                             ParamName = tools.Extract(ref FileParam, "=", 1).Trim();
                             ParamVal = tools.Extract(ref FileParam, "=", 2).Trim();
 
-                            if (!ParamName.Substring(0).Equals("%")) 
+                            if (!ParamName.Substring(0).Equals("%"))
                             {
                                 switch (ParamName.ToUpper())
                                 {
-                                    case "CYCLE HEADWAY TIME" : 
+                                    case "CYCLE HEADWAY TIME":
                                         Params.Buttons[BUTTON_CYCLEHEADWAYTIME] = Convert.ToInt64(ParamVal);
                                         break;
-                                    
-                                    case "DECREASE VEHICLE SPEED" :
+
+                                    case "DECREASE VEHICLE SPEED":
                                         Params.Buttons[BUTTON_DECREASESPEED] = Convert.ToInt64(ParamVal);
                                         break;
-                                    
-                                    case "INCREASE VEHICLE SPEED" :
+
+                                    case "INCREASE VEHICLE SPEED":
                                         Params.Buttons[BUTTON_INCREASESPEED] = Convert.ToInt64(ParamVal);
                                         break;
-                                    
-                                    case "ACTIVATE ACC" :
+
+                                    case "ACTIVATE ACC":
                                         Params.Buttons[BUTTON_ACTIVATEACC] = Convert.ToInt64(ParamVal);
                                         break;
-                                    
-                                    case "ACTIVATE HAD" :
+
+                                    case "ACTIVATE HAD":
                                         Params.Buttons[BUTTON_ACTIVATEHAD] = Convert.ToInt64(ParamVal);
                                         break;
-                                    
-                                    case "CANCEL AUTONOMOUS MODE" :
+
+                                    case "CANCEL AUTONOMOUS MODE":
                                         Params.Buttons[BUTTON_CANCEL] = Convert.ToInt64(ParamVal);
                                         break;
-                                    
-                                    case "COMMAND LEFT LANE CHANGE" :
+
+                                    case "COMMAND LEFT LANE CHANGE":
                                         Params.Buttons[BUTTON_LEFTLANECHANGE] = Convert.ToInt64(ParamVal);
                                         break;
-                                    
-                                    case "COMMAND RIGHT LANE CHANGE" :
+
+                                    case "COMMAND RIGHT LANE CHANGE":
                                         Params.Buttons[BUTTON_RIGHTLANECHANGE] = Convert.ToInt64(ParamVal);
                                         break;
-                                    
-                                    case "EXCEED SPEED LIMIT" :
+
+                                    case "EXCEED SPEED LIMIT":
                                         Params.LimitSpeed = Convert.ToInt64(ParamVal);
                                         break;
-                                    
-                                    case "BRAKE GAIN" :
+
+                                    case "BRAKE GAIN":
                                         Params.BrakeGain = Convert.ToSingle(ParamVal);
                                         break;
-                                    
-                                    case "THROTTLE GAIN" :
+
+                                    case "THROTTLE GAIN":
                                         Params.ThrottleGain = Convert.ToSingle(ParamVal);
                                         break;
-                                    
-                                    case "STEERING GAIN" :
+
+                                    case "STEERING GAIN":
                                         Params.SteeringGain = Convert.ToSingle(ParamVal);
                                         break;
-                                    
-                                    case "STEERING INPUT LIMIT" :
+
+                                    case "STEERING INPUT LIMIT":
                                         Params.SteeringLimit = Convert.ToSingle(ParamVal);
                                         break;
-                                    
-                                    case "HEADWAY TIME SMALL" :
+
+                                    case "HEADWAY TIME SMALL":
                                         Params.Headway[0] = Convert.ToSingle(ParamVal);
                                         break;
-                                    
-                                    case "HEADWAY TIME MODERATE" :
+
+                                    case "HEADWAY TIME MODERATE":
                                         Params.Headway[1] = Convert.ToSingle(ParamVal);
                                         break;
-                                    
-                                    case "HEADWAY TIME LARGE" :
+
+                                    case "HEADWAY TIME LARGE":
                                         Params.Headway[2] = Convert.ToSingle(ParamVal);
                                         break;
-                                    
-                                    case "RANGE" :
+
+                                    case "RANGE":
                                         Params.Range = Convert.ToSingle(ParamVal);
                                         break;
-                                    
-                                    case "CRUISE PROPORTIONAL" :
+
+                                    case "CRUISE PROPORTIONAL":
                                         Params.CruisePID.Proportional = Convert.ToSingle(ParamVal);
                                         break;
-                                    
-                                    case "CRUISE INTEGRAL" :
+
+                                    case "CRUISE INTEGRAL":
                                         Params.CruisePID.Integral = Convert.ToSingle(ParamVal);
                                         break;
-                                    
-                                    case "CRUISE DERIVATIVE" :
+
+                                    case "CRUISE DERIVATIVE":
                                         Params.CruisePID.Derivative = Convert.ToSingle(ParamVal);
                                         break;
-                                    
-                                    case "FOLLOW PROPORTIONAL" :
+
+                                    case "FOLLOW PROPORTIONAL":
                                         Params.FollowPID.Proportional = Convert.ToSingle(ParamVal);
                                         break;
-                                    
-                                    case "FOLLOW INTEGRAL" :
+
+                                    case "FOLLOW INTEGRAL":
                                         Params.FollowPID.Integral = Convert.ToSingle(ParamVal);
                                         break;
-                                    
-                                    case "FOLLOW DERIVATIVE" :
+
+                                    case "FOLLOW DERIVATIVE":
                                         Params.FollowPID.Derivative = Convert.ToSingle(ParamVal);
                                         break;
-                                    
-                                    case "LANE CHANGE PROPORTIONAL" :
+
+                                    case "LANE CHANGE PROPORTIONAL":
                                         Params.LanePID.Proportional = Convert.ToSingle(ParamVal);
                                         break;
-                                    
-                                    case "LANE CHANGE INTEGRAL" :
+
+                                    case "LANE CHANGE INTEGRAL":
                                         Params.LanePID.Integral = Convert.ToSingle(ParamVal);
                                         break;
-                                    
-                                    case "LANE CHANGE DERIVATIVE" :
+
+                                    case "LANE CHANGE DERIVATIVE":
                                         Params.LanePID.Derivative = Convert.ToSingle(ParamVal);
                                         break;
-                                    
-                                    case "LANE CHANGE DELAY" :
+
+                                    case "LANE CHANGE DELAY":
                                         Params.LaneChangeDelay = Convert.ToSingle(ParamVal);
                                         break;
-                                    
-                                    case "ACCMODE IMAGE" :
+
+                                    case "ACCMODE IMAGE":
                                         Params.Image_ACC = ParamVal.Trim();
                                         break;
-                                    
-                                    case "HADMODE IMAGE" :
+
+                                    case "HADMODE IMAGE":
                                         Params.Image_HAD = ParamVal.Trim();
                                         break;
-                                    
-                                    case "IMAGE SIZE" :
+
+                                    case "IMAGE SIZE":
                                         Params.Image_Size = Convert.ToSingle(ParamVal);
                                         break;
-                                    
-                                    case "IMAGE TOP" :
+
+                                    case "IMAGE TOP":
                                         Params.Image_Top = Convert.ToSingle(ParamVal);
                                         break;
-                                    
-                                    case "Image LEFT" :
+
+                                    case "Image LEFT":
                                         Params.Image_Left = Convert.ToSingle(ParamVal);
                                         break;
                                 }
                             }
                         }
-                        
+
                         // Since buttons will be performing certain functions, manipulate our button settings
-                        
+
                         // Get the turn signal values
                         LeftTurnButton = Config.ExtButtonMasksLng[TURN_BUTTON_LEFT];
                         RightTurnButton = Config.ExtButtonMasksLng[TURN_BUTTON_RIGHT];
                         SignalToggle = Config.Dashboard.TurnSig.Toggle;
-                        
+
                         // Disable any buttons that have also been assigned an autonomous function
                         // TODO: Source starts loop at 1, usually starts at 0
                         for (int i = 1; i < Config.ExtButtonMasksLng.Length; i++)
@@ -1156,20 +1139,20 @@ namespace OM_Automated_Driving
                     ErrorType = 3;
                     throw new FileNotFoundException("Cannot locate param file");
                 }
-                
+
                 // Adjust config settings and pre-compute some variables using config file info
-                
+
                 // Get the amount the pedals will travel
                 BrakeTravel = Math.Abs(Config.IBrakeMax - Config.IBrakeMin);
                 ThrottleTravel = Math.Abs(Config.IThrottleMax - Config.IThrottleMin);
-                
+
                 // Get the side of the road the driver is supposed to drive on
                 DriveOnLeft = Convert.ToInt64(Config.RoadSide);
-                
+
                 // Compute the gains for the control axis
                 if (Convert.ToBoolean(Params.BrakeGain))
                 {
-                    BrakeSF = - Params.BrakeGain;
+                    BrakeSF = -Params.BrakeGain;
                 }
                 else
                 {
@@ -1196,7 +1179,7 @@ namespace OM_Automated_Driving
 
                 // Save a local version of the configuration file
                 Gains = (GAINSParams) CloneStructure(Config);
-                
+
                 // Set it so that the simulator records the inputs from this module
                 OM_SaveControls = 1;
 
@@ -1209,7 +1192,7 @@ namespace OM_Automated_Driving
                 return false;
             }
         }
-        
+
         ///
         /// <summary>
         ///     Function for handling all Open Module action during the actual simulation loop.
@@ -1230,7 +1213,7 @@ namespace OM_Automated_Driving
         ///     method will return false.
         /// </returns>
         /// 
-        public bool Update(ref OMDynamicVariables DV, DYNAMICSParams Vehicle, short NumEvents, ref float[] EDist, 
+        public bool Update(ref OMDynamicVariables DV, DYNAMICSParams Vehicle, short NumEvents, ref float[] EDist,
             short[] EDes, short[] EIndex)
         {
             try
@@ -1251,7 +1234,7 @@ namespace OM_Automated_Driving
                 float TempTime;
                 long VehIndex;
                 DetectedVehicle[] VehOther = new DetectedVehicle[VEH_RIGHTREAR];
-                
+
                 // Only allow the autonomous modes if the vehicle is moving
                 if (Vehicle.U == 0)
                 {
@@ -1260,14 +1243,14 @@ namespace OM_Automated_Driving
                     TurnDisplayOff();
                     return true;
                 }
-                
+
                 // Handle any specific task that needs to be performed during only the initial pass through this function
                 if (FirstPass)
                 {
                     Driver.ButtonsPrev = Driver.Buttons;
                     FirstPass = false;
                 }
-                
+
                 // Get some variables that will be needed in our calculations
                 HalfMedian = 0.5f * Convert.ToSingle(Events.Road[Events.CurrentRoad].MedianWidth);
                 LaneWidth = Convert.ToSingle(Events.Road[Events.CurrentRoad].Width);
@@ -1275,7 +1258,7 @@ namespace OM_Automated_Driving
                 NumLanesR = Events.Road[Events.CurrentRoad].NumRLanes;
                 NumLanesL = NumLanes - NumLanesR;
                 DriversLane = DV.LaneNumber;
-                
+
                 // Set variables to our initial range value
                 VehIndex = OPTION_OFF;
                 for (int i = 0; i < VEH_RIGHTREAR; i++)
@@ -1289,8 +1272,8 @@ namespace OM_Automated_Driving
                     {
                         VehOther[i].Distance = -Params.Range;
                     }
-                } 
-                
+                }
+
                 // Loop through the number of active events looking for vehicles
                 // TODO: Seriously reconsider using nested switch statements
                 for (int i = 0; i < NumEvents; i++)
@@ -1298,31 +1281,30 @@ namespace OM_Automated_Driving
                     // TODO: Switch only has one branch
                     switch (EDes[i])
                     {
-                        case EVENTDEFVEHICLE :
-                            
+                        case EVENTDEFVEHICLE:
+
                             // Vehicle is in the driven vehicles lane
                             if (Events.Vehicles[EIndex[i]].LaneNumber == DriversLane)
                             {
                                 VehIndex = VEH_FRONT;
                             }
-                            
+
                             // Vehicle is to the left of the driven vehicle
                             else if (Events.Vehicles[EIndex[i]].LaneNumber == (DriversLane - 1))
                             {
-                                
                                 // Determine if the vehicle is in front
                                 if (EDist[i] > 1)
                                 {
                                     VehIndex = VEH_LEFTFRONT;
                                 }
-                                
+
                                 // Or behind
                                 else if (EDist[i] < -1)
                                 {
                                     VehIndex = VEH_LEFTREAR;
                                 }
                             }
-                            
+
                             // Vehicle is to the right of the driven vehicle
                             else if (Events.Vehicles[EIndex[i]].LaneNumber == (DriversLane + 1))
                             {
@@ -1331,24 +1313,24 @@ namespace OM_Automated_Driving
                                 {
                                     VehIndex = VEH_RIGHTFRONT;
                                 }
-                                
+
                                 // Or behind
                                 else if (EDist[i] < -1)
                                 {
                                     VehIndex = VEH_RIGHTREAR;
                                 }
                             }
-                            
+
                             // If the vehicle exists, setup the parameters
                             if (VehIndex > (VEH_FRONT - 1))
                             {
                                 SetOtherVehicle(ref VehOther[VehIndex], EIndex[i], EDist[i]);
                             }
-                            
+
                             break;
                     }
                 }
-                
+
                 // Set the starting lane of the automation to the current lane
                 // before any control actions are carried out
                 if (!LaneControlActive)
@@ -1358,148 +1340,160 @@ namespace OM_Automated_Driving
                 }
 
                 SimFrameCount++;
-                
+
                 // Handle button presses but only process them after the button has been released
+                tools.WriteToTJRFile(ref OM_LogFileHandle,
+                    Driver.ButtonsPrev.ToString() + " = " + Driver.Buttons.ToString());
                 if (Driver.ButtonsPrev != Driver.Buttons)
                 {
-                    ButtonOn = false;
-                    if (Convert.ToBoolean(ButtonPressed))
+                    if (ButtonOn)
                     {
-                        // Increase the vehicle speed
-                        if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_INCREASESPEED])
+                        ButtonOn = false;
+
+
+                        if (Convert.ToBoolean(ButtonPressed))
                         {
-                            if (VehOther[VEH_FRONT].Distance > 0)
+                            // Increase the vehicle speed
+                            if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_INCREASESPEED])
                             {
-                                TempSng = VehTargetSpeed / SPEED_CONST_1;
-                                if (TempSng >= 0)
+                                if (VehOther[VEH_FRONT].Distance > 0)
                                 {
-                                    if (VehTargetSpeed <= SPEED_MAX)
+                                    TempSng = VehTargetSpeed / SPEED_CONST_1;
+                                    if (TempSng >= 0)
                                     {
-                                        TempSng = Convert.ToSingle(((Math.Truncate(TempSng / SPEED_CONST_2)) * SPEED_CONST_2));
-                                        VehTargetSpeed = (TempSng + SPEED_CONST_2) + SPEED_CONST_1;
+                                        if (VehTargetSpeed <= SPEED_MAX)
+                                        {
+                                            TempSng = Convert.ToSingle(
+                                                ((Math.Truncate(TempSng / SPEED_CONST_2)) * SPEED_CONST_2));
+                                            VehTargetSpeed = (TempSng + SPEED_CONST_2) + SPEED_CONST_1;
+                                        }
                                     }
                                 }
-                            }
-                            else
-                            {
-                                VehTargetSpeed += SPEED_INCREMENT;
-                            }
-                        }
-
-                        tools.WriteToTJRFile(ref OM_LogFileHandle, (Driver.Buttons & ButtonPressed).ToString() + " vs. " + Params.Buttons[BUTTON_ACTIVATEHAD].ToString());
-                        // Decrease the vehicle speed
-                        if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_DECREASESPEED])
-                        {
-                            if (VehOther[VEH_FRONT].Distance > 0)
-                            {
-                                TempSng = VehTargetSpeed / SPEED_CONST_1;
-                                if (TempSng >= 0)
+                                else
                                 {
-                                    TempSng = Convert.ToSingle(
-                                        (Math.Truncate(TempSng / SPEED_CONST_2)) * SPEED_CONST_2);
-                                    VehTargetSpeed = (TempSng - SPEED_CONST_2) * SPEED_CONST_1;
+                                    VehTargetSpeed += SPEED_INCREMENT;
                                 }
                             }
-                            else
+
+                            tools.WriteToTJRFile(ref OM_LogFileHandle,
+                                (Driver.Buttons & ButtonPressed).ToString() + " vs. " +
+                                Params.Buttons[BUTTON_ACTIVATEHAD].ToString());
+                            // Decrease the vehicle speed
+                            if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_DECREASESPEED])
                             {
-                                VehTargetSpeed -= SPEED_INCREMENT;
-                            }
-                        }
-                        
-                        // Command a lane change to the right
-                        if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_RIGHTLANECHANGE])
-                        {
-                            InitLane = LaneTarget;
-                            LaneTarget++;
-                            SignalActive = TURNSIG_RIGHT;
-                            StartDelay = DV.TimeSinceStart;
-                        }
-                        
-                        // Command a lane change to the left
-                        if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_LEFTLANECHANGE])
-                        {
-                            InitLane = LaneTarget;
-                            LaneTarget--;
-                            SignalActive = TURNSIG_LEFT;
-                            StartDelay = DV.TimeSinceStart;
-                        }
-                        
-                        // Cycle headway times
-                        if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_CYCLEHEADWAYTIME])
-                        {
-                            ThwCycle++;
-                            if (ThwCycle == 4)
-                            {
-                                ThwCycle = 1;
+                                if (VehOther[VEH_FRONT].Distance > 0)
+                                {
+                                    TempSng = VehTargetSpeed / SPEED_CONST_1;
+                                    if (TempSng >= 0)
+                                    {
+                                        TempSng = Convert.ToSingle(
+                                            (Math.Truncate(TempSng / SPEED_CONST_2)) * SPEED_CONST_2);
+                                        VehTargetSpeed = (TempSng - SPEED_CONST_2) * SPEED_CONST_1;
+                                    }
+                                }
+                                else
+                                {
+                                    VehTargetSpeed -= SPEED_INCREMENT;
+                                }
                             }
 
-                            Thw = Params.Headway[ThwCycle - 1];
-                        }
-                        
-                        // Toggle the ACC system
-                        if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_ACTIVATEACC])
-                        {
-                            if (ControlMode == AUTONOMOUS_ACC)
+                            // Command a lane change to the right
+                            if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_RIGHTLANECHANGE])
                             {
-                                ControlMode = AUTONOMOUS_MANUAL;
-                                TurnDisplayOff();
+                                InitLane = LaneTarget;
+                                LaneTarget++;
+                                SignalActive = TURNSIG_RIGHT;
+                                StartDelay = DV.TimeSinceStart;
                             }
-                            else
+
+                            // Command a lane change to the left
+                            if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_LEFTLANECHANGE])
                             {
-                                ControlMode = AUTONOMOUS_ACC;
-                                VehTargetSpeed = VehCurSpeed;
-                                graphics.SetObjectVisibility(ACCDisplay.Handle, GRAPHICS_IMAGE_ON);
-                                graphics.SetObjectVisibility(LaneKeepingDisplay.Handle, GRAPHICS_IMAGE_OFF);
+                                InitLane = LaneTarget;
+                                LaneTarget--;
+                                SignalActive = TURNSIG_LEFT;
+                                StartDelay = DV.TimeSinceStart;
                             }
-                        }
-                        
-                        // Activate full autonomous mode
-                        if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_ACTIVATEHAD])
-                        {
-                            tools.WriteToTJRFile(ref OM_LogFileHandle, "I was reached");
-                            if (ControlMode == AUTONOMOUS_FULL)
+
+                            // Cycle headway times
+                            if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_CYCLEHEADWAYTIME])
                             {
-                                tools.WriteToTJRFile(ref OM_LogFileHandle, "2");
-                                ControlMode = AUTONOMOUS_MANUAL;
-                                TurnDisplayOff();
-                            }
-                            else
-                            {
-                                tools.WriteToTJRFile(ref OM_LogFileHandle, "3");
-                                ControlMode = AUTONOMOUS_FULL;
-                                VehTargetSpeed = VehCurSpeed;
-                                LaneTarget = DriversLane;
-                                InitLane = DriversLane;
-                                if (InitLane > NumLanesR)
+                                ThwCycle++;
+                                if (ThwCycle == 4)
                                 {
-                                    InitLane = NumLanesL + 1;
-                                }
-                                else if (InitLane < NumLanesL)
-                                {
-                                    InitLane = NumLanesL - 1;
+                                    ThwCycle = 1;
                                 }
 
-                                graphics.SetObjectVisibility(ACCDisplay.Handle, GRAPHICS_IMAGE_ON);
-                                graphics.SetObjectVisibility(LaneKeepingDisplay.Handle, GRAPHICS_IMAGE_OFF);
+                                Thw = Params.Headway[ThwCycle - 1];
                             }
 
-                            // Cancel all automation modes (Why is this here?)
-                            /*if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_CANCEL])
+                            // Toggle the ACC system
+                            if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_ACTIVATEACC])
                             {
-                                ControlMode = AUTONOMOUS_MANUAL;
-                                TurnDisplayOff();
-                            }*/
-                        }
+                                if (ControlMode == AUTONOMOUS_ACC)
+                                {
+                                    ControlMode = AUTONOMOUS_MANUAL;
+                                    TurnDisplayOff();
+                                }
+                                else
+                                {
+                                    ControlMode = AUTONOMOUS_ACC;
+                                    VehTargetSpeed = VehCurSpeed;
+                                    graphics.SetObjectVisibility(ACCDisplay.Handle, GRAPHICS_IMAGE_ON);
+                                    graphics.SetObjectVisibility(LaneKeepingDisplay.Handle, GRAPHICS_IMAGE_OFF);
+                                }
+                            }
 
-                        ButtonPressed = 0;
+                            // Activate full autonomous mode
+                            if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_ACTIVATEHAD])
+                            {
+                                if (ControlMode == AUTONOMOUS_FULL)
+                                {
+                                    tools.WriteToTJRFile(ref OM_LogFileHandle, "Turning off");
+                                    tools.WriteToTJRFile(ref OM_LogFileHandle, "2");
+                                    tools.WriteToTJRFile(ref OM_LogFileHandle,
+                                        "************************************************");
+                                    ControlMode = AUTONOMOUS_MANUAL;
+                                    TurnDisplayOff();
+                                }
+                                else
+                                {
+                                    tools.WriteToTJRFile(ref OM_LogFileHandle, "3");
+                                    ControlMode = AUTONOMOUS_FULL;
+                                    VehTargetSpeed = VehCurSpeed;
+                                    LaneTarget = DriversLane;
+                                    InitLane = DriversLane;
+                                    if (InitLane > NumLanesR)
+                                    {
+                                        InitLane = NumLanesL + 1;
+                                    }
+                                    else if (InitLane < NumLanesL)
+                                    {
+                                        InitLane = NumLanesL - 1;
+                                    }
+
+                                    graphics.SetObjectVisibility(ACCDisplay.Handle, GRAPHICS_IMAGE_ON);
+                                    graphics.SetObjectVisibility(LaneKeepingDisplay.Handle, GRAPHICS_IMAGE_OFF);
+                                }
+
+                                // Cancel all automation modes (Why is this here?)
+                                /*if ((Driver.Buttons & ButtonPressed) == Params.Buttons[BUTTON_CANCEL])
+                                {
+                                    ControlMode = AUTONOMOUS_MANUAL;
+                                    TurnDisplayOff();
+                                }*/
+                            }
+
+                            ButtonPressed = 0;
+                        }
+                    }
+                    else
+                    {
+                        ButtonOn = true;
+                        ButtonPressed = Driver.Buttons;
                     }
                 }
-                else
-                {
-                    ButtonOn = true;
-                    ButtonPressed = Driver.Buttons;
-                }
-                
+
                 // Force the automation to abide by the posted speed limit.
                 // This will hinder the driver from overriding the acc set speed
                 // parameters to velocities above the speed limit
@@ -1510,7 +1504,7 @@ namespace OM_Automated_Driving
                         VehTargetSpeed = DV.SpeedLimit;
                     }
                 }
-                
+
                 // Act differently based on if there is a vehicle directly in front of the driver or not
                 VehCurSpeed = Vehicle.U;
                 if (VehOther[VEH_FRONT].VehicleIndex == -1)
@@ -1551,7 +1545,7 @@ namespace OM_Automated_Driving
                         SetACCMode(Vehicle.U);
                     }
                 }
-                
+
                 // If we are in autonomous mode, handle the speed commands
                 if (ControlMode >= AUTONOMOUS_ACC)
                 {
@@ -1560,18 +1554,18 @@ namespace OM_Automated_Driving
                     switch (ACCMode)
                     {
                         // Use the driver's inputs
-                        case ACCMODE_OFF :
+                        case ACCMODE_OFF:
                             Driver.ThrottleOut = Driver.ThrottleIn;
                             Driver.BrakeOut = Driver.BrakeIn;
                             break;
-                        
+
                         // Set the commanded speed to basic cruise control
-                        case ACCMODE_CRUISE :
+                        case ACCMODE_CRUISE:
                             SpeedCommand = Cruise.Control(VehTargetSpeed, Vehicle.U, DV.TimeInc);
                             break;
-                        
+
                         // There is a vehicle in front that the system needs to follow
-                        case ACCMODE_FOLLOWING :
+                        case ACCMODE_FOLLOWING:
                             if (VehOther[VEH_FRONT].Distance > 0)
                             {
                                 if (VehOther[VEH_FRONT].VehicleIndex > -1)
@@ -1583,18 +1577,19 @@ namespace OM_Automated_Driving
                             }
 
                             break;
-                        
+
                         // Set the system to adapt to the desired speed
-                        case ACCMODE_ADAPTING :
+                        case ACCMODE_ADAPTING:
                             if (!Trajectory.Interpolating)
                             {
                                 Trajectory.PlanTrajectory(Vehicle.U, VehTargetSpeed, SimFrameCount, 4.5f, DV.TimeInc);
                             }
-                            
+
                             TempSng = Trajectory.UpdateTrajectory(SimFrameCount);
                             SpeedCommand = Cruise.Control(TempSng, Vehicle.U, DV.TimeInc);
                             break;
                     }
+
                     // Based on the commanded speed, make changes to the pedal inputs
                     if (SpeedCommand > 0)
                     {
@@ -1607,13 +1602,12 @@ namespace OM_Automated_Driving
                         Driver.BrakeOut = SpeedCommand * BrakeSF;
                     }
                 }
-                
+
                 // If we are in full autonomous mode, then handle lane changes
                 if (ControlMode == AUTONOMOUS_FULL)
                 {
-                    
                     // Determine which lane we should be in
-                    if ((LaneTarget >= - NumLanesL) && (LaneTarget <= NumLanesR))
+                    if ((LaneTarget >= -NumLanesL) && (LaneTarget <= NumLanesR))
                     {
                         Lane = Math.Abs(LaneTarget);
                     }
@@ -1627,7 +1621,7 @@ namespace OM_Automated_Driving
                         Lane = NumLanesL;
                         LaneTarget = -Lane;
                     }
-                    
+
                     // Delay the start of the lane change
                     if (DV.TimeSinceStart < (StartDelay + Params.LaneChangeDelay))
                     {
@@ -1637,13 +1631,13 @@ namespace OM_Automated_Driving
                     {
                         LanePosition = (Lane - 0.5f) * LaneWidth + HalfMedian;
                     }
-                    
+
                     // If it is driving on the left change the sign of the offset
                     if (Convert.ToBoolean(DriveOnLeft))
                     {
                         LanePosition = -LanePosition;
                     }
-                    
+
                     // Handle the turn signals
                     if (Convert.ToBoolean(SignalActive))
                     {
@@ -1656,13 +1650,13 @@ namespace OM_Automated_Driving
                             }
                         }
                     }
-                    
+
                     // Compute the steering input
                     LateralPos.KProportional =
-                        Params.LanePID.Proportional + 
+                        Params.LanePID.Proportional +
                         Convert.ToSingle(0.065 * (Math.Pow((FEETPERSECTOMPH * Vehicle.U), 1.7)));
                     Driver.SteerOut = SteeringSF * LateralPos.Control(LanePosition, Vehicle.YLanePos, DV.TimeInc);
-                    
+
                     // Limit our steering input
                     if (Driver.SteerOut > Params.SteeringLimit)
                     {
@@ -1673,7 +1667,7 @@ namespace OM_Automated_Driving
                         Driver.SteerOut = -Params.SteeringLimit;
                     }
                 }
-                
+
                 // Update the operators user interface
                 DV.DisplayStrings[1] = ControlMode switch
                 {
@@ -1700,7 +1694,7 @@ namespace OM_Automated_Driving
         {
             return StrIn;
         }
-        
+
         private object CloneStructure(object StrIn)
         {
             return StrIn;
@@ -1718,11 +1712,11 @@ namespace OM_Automated_Driving
 
         private void TurnDisplayOff()
         {
-            graphics.SetObjectVisibility((int)ACCDisplay.Handle, GRAPHICS_IMAGE_OFF);
-            graphics.SetObjectVisibility((int)LaneKeepingDisplay.Handle, GRAPHICS_IMAGE_OFF);
+            graphics.SetObjectVisibility((int) ACCDisplay.Handle, GRAPHICS_IMAGE_OFF);
+            graphics.SetObjectVisibility((int) LaneKeepingDisplay.Handle, GRAPHICS_IMAGE_OFF);
             SignalActive = TURNSIG_NONE;
         }
-        
+
         private long ProcessSignal(long state, long Buttons)
         {
             // New to bitwise operations, this could be false
