@@ -45,8 +45,13 @@
     <ItemGroup>
         <Compile Include="Bezier.cs" />
         <Compile Include="Controller.cs" />
+        <Compile Include="DetectedVehicle.cs" />
+        <Compile Include="DriverControlInputs.cs" />
+        <Compile Include="InputParameters.cs" />
         <Compile Include="OM_Module.cs" />
+        <Compile Include="PIDValues.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="ScreenObjects.cs" />
     </ItemGroup>
     <ItemGroup>
       <Content Include=".gitignore" />

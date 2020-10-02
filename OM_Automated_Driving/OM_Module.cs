@@ -204,98 +204,12 @@ namespace OM_Automated_Driving
         private static bool FirstPass = true;
         private static float InitLane;
         private static float StartDelay;
+        
+        private DriverControlInputs Driver;
+        InputParameters Params;
 
-        // Create a type for the driver input information
-        // TODO: Refactor into own file/class
-        private struct DriverControlInputs
-        {
-            // Original braking input from the driver
-            public float BrakeIn;
-
-            // Braking input that will be used
-            public float BrakeOut;
-
-            // Current state of the driver's input buttons
-            public long Buttons;
-
-            // Save the current values of the buttons
-            public long ButtonsPrev;
-
-            // Clutch control count from the controller card
-            public float Clutch;
-
-            // Current transmission gear 
-            public short Gear;
-
-            // Original steering angle input from the driver
-            public float SteerIn;
-
-            // Steering input that will be used
-            public float SteerOut;
-
-            // Original throttle control input from the driver
-            public float ThrottleIn;
-
-            // Gas pedal input that will be used
-            public float ThrottleOut;
-        }
-
-        private DriverControlInputs Driver = new DriverControlInputs();
-
-        // Create a type and variable
-        // TODO: Refactor into own file/class
-        private struct PIDValues
-        {
-            public float Derivative;
-            public float Integral;
-            public float Proportional;
-        }
-
-        // TODO: Refactor into own file/class
-        private struct InputParams
-        {
-            public float BrakeGain;
-            public long[] Buttons;
-            public PIDValues CruisePID;
-            public PIDValues FollowPID;
-            public float[] Headway;
-            public string Image_ACC;
-            public string Image_HAD;
-            public float Image_Left;
-            public float Image_Size;
-            public float Image_Top;
-            public float LaneChangeDelay;
-            public PIDValues LanePID;
-            public long LimitSpeed;
-            public float Range;
-            public float SteeringGain;
-            public float SteeringLimit;
-            public float ThrottleGain;
-        }
-
-        InputParams Params = new InputParams();
-
-        // Create a type for holding other vehicle information
-        // TODO: Refactor into own file/class
-        private struct DetectedVehicle
-        {
-            public float Distance;
-            public long VehicleIndex;
-        }
-
-        // Create a type for holding information for the screen objects
-        // TODO: Refactor into own file/class
-        private struct ScreenObjects
-        {
-            public string Description;
-            public int Handle;
-            public long ModelID;
-            public SixDOFPosition SixDOF;
-            public long VisIndex;
-        }
-
-        ScreenObjects ACCDisplay = new ScreenObjects();
-        ScreenObjects LaneKeepingDisplay = new ScreenObjects();
+        ScreenObjects ACCDisplay;
+        ScreenObjects LaneKeepingDisplay;
 
         // Define variables that will be global to this class and hold OM information
         private long BrakeTravel;
